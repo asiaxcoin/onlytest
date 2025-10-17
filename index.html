@@ -52,28 +52,25 @@
         <p id="walletStatus" class="text-center"></p>
         
         <div id="ownerPanel" style="display: none;">
-            <!-- 📊 Current Status -->
             <div class="info">
                 <p><strong>💰 Current Price:</strong> <span id="currentPrice">-</span></p>
                 <p><strong>🏦 USDT Receiver:</strong> <span id="currentReceiver">-</span></p>
                 <p><strong>💎 Contract ASIAX:</strong> <span id="contractBalance">-</span></p>
+                <p><strong>⛽ Gas Price:</strong> <span id="gasPrice">-</span> Gwei</p>
             </div>
 
-            <!-- 1️⃣ Set Price -->
             <div class="section">
                 <h5>📈 Set Price (ASIAX per 1 USDT)</h5>
-                <input type="number" id="newPrice" class="form-control" placeholder="e.g. 2 (2 ASIAX = 1 USDT)" min="1">
+                <input type="number" id="newPrice" class="form-control" placeholder="e.g. 2" min="1">
                 <button id="setPriceButton" class="btn btn-warning w-100">Set Price</button>
             </div>
 
-            <!-- 2️⃣ Set Receiver -->
             <div class="section">
                 <h5>🏦 Set USDT Receiver</h5>
                 <input type="text" id="newReceiver" class="form-control" placeholder="0x...">
                 <button id="setReceiverButton" class="btn btn-warning w-100">Set Receiver</button>
             </div>
 
-            <!-- 3️⃣ Withdraw ASIAX -->
             <div class="section">
                 <h5>💸 Withdraw ASIAX</h5>
                 <input type="number" id="withdrawAmount" class="form-control" placeholder="e.g. 1000" min="0" step="0.01">
@@ -86,9 +83,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
     <script>
-        // 🔥 ACTUAL ADDRESSES YAHAN DAALEN
         const CONTRACT_ADDRESS = '0xd4ac533915357Cf5322e333964575130b42e218C';
-        const ASIAX_ADDRESS = '0xe36b5223d488322fac2ddda937e5ab226e83fbbd';// ✅ CORRECT ABI - EXACT CONTRACT SE
+        const ASIAX_ADDRESS = '0xe36b5223d488322fac2ddda937e5ab226e83fbbd';
         const CONTRACT_ABI = [
             {"inputs":[{"internalType":"uint256","name":"_asiaxPerUSDT","type":"uint256"}],"name":"setPrice","outputs":[],"stateMutability":"nonpayable","type":"function"},
             {"inputs":[{"internalType":"address","name":"_receiver","type":"address"}],"name":"setReceiver","outputs":[],"stateMutability":"nonpayable","type":"function"},
@@ -100,15 +96,14 @@
 
         let web3, contract, asiaxContract, account;
 
-        // Elements
         const connectWalletBtn = document.getElementById('connectWallet');
         const ownerPanel = document.getElementById('ownerPanel');
         const errorMessage = document.getElementById('errorMessage');
         const currentPrice = document.getElementById('currentPrice');
         const currentReceiver = document.getElementById('currentReceiver');
         const contractBalance = document.getElementById('contractBalance');
+        const gasPriceEl = document.getElementById('gasPrice');
 
-        // Inputs & Buttons
         const newPriceInput = document.getElementById('newPrice');
         const setPriceButton = document.getElementById('setPriceButton');
         const newReceiverInput = document.getElementById('newReceiver');
@@ -116,7 +111,25 @@
         const withdrawAmountInput = document.getElementById('withdrawAmount');
         const withdrawButton = document.getElementById('withdrawButton');
 
-        // 1️⃣ Connect Wallet
+        // ✅ FIXED: Simple Transaction Function
+        async function sendTx(methodCall) {
+            try {
+                const gasEstimate = await methodCall.estimateGas({ from: account });
+                const gasPrice = await web3.eth.getGasPrice();
+                const gasLimit = Math.floor(gasEstimate * 1.2);
+                
+                await methodCall.send({
+                    from: account,
+                    gas: gasLimit,
+                    gasPrice: gasPrice
+                });
+                return true;
+            } catch (error) {
+                console.error('Tx Error:', error);
+                throw error;
+            }
+        }
+
         async function initWeb3() {
             if (window.ethereum) {
                 web3 = new Web3(window.ethereum);
@@ -134,12 +147,9 @@
                     document.getElementById('walletStatus').innerText = '❌ Connection failed';
                 }
             } else {
-                alert('📱 Mobile Wallet install karen (MetaMask/Trust Wallet)');
+                alert('📱 Mobile Wallet install karen');
             }
-        }
-
-        // 2️⃣ Owner Check
-        async function checkOwner() {
+        }async function checkOwner() {
             try {
                 const ownerAddr = await contract.methods.owner().call();
                 if (account.toLowerCase() === ownerAddr.toLowerCase()) {
@@ -152,7 +162,8 @@
             } catch (error) {
                 errorMessage.innerText = '❌ Owner check failed';
             }
-        }// 3️⃣ Fetch Data
+        }
+
         async function fetchData() {
             try {
                 const price = await contract.methods.asiaxPerUSDT().call();
@@ -160,34 +171,38 @@
                 const balanceWei = await asiaxContract.methods.balanceOf(CONTRACT_ADDRESS).call();
                 const balance = web3.utils.fromWei(balanceWei, 'ether');
 
+                const gasWei = await web3.eth.getGasPrice();
+                const gasGwei = web3.utils.fromWei(gasWei, 'gwei');
+
                 currentPrice.innerText = `${price} ASIAX`;
                 currentReceiver.innerHTML = `${receiver.slice(0,6)}...${receiver.slice(-4)}`;
                 contractBalance.innerText = `${parseFloat(balance).toFixed(2)} ASIAX`;
+                gasPriceEl.innerText = `${parseFloat(gasGwei).toFixed(2)}`;
             } catch (error) {
                 console.error('Fetch error:', error);
             }
         }
 
-        // 4️⃣ Set Price
+        // ✅ FIXED: Set Price - CORRECT SYNTAX
         setPriceButton.addEventListener('click', async () => {
             const price = parseInt(newPriceInput.value);
             if (!price || price <= 0) return alert('❌ Valid price daalen!');
             try {
-                await contract.methods.setPrice(price).send({ from: account });
+                await sendTx(contract.methods.setPrice(price));
                 alert('✅ Price set successfully!');
                 newPriceInput.value = '';
                 await fetchData();
             } catch (error) {
-                alert('❌ Transaction failed!');
+                alert('❌ Transaction failed! Check gas/ETH balance.');
             }
         });
 
-        // 5️⃣ Set Receiver
+        // ✅ FIXED: Set Receiver - CORRECT SYNTAX
         setReceiverButton.addEventListener('click', async () => {
             const receiver = newReceiverInput.value.trim();
             if (!web3.utils.isAddress(receiver)) return alert('❌ Valid address daalen!');
             try {
-                await contract.methods.setReceiver(receiver).send({ from: account });
+                await sendTx(contract.methods.setReceiver(receiver));
                 alert('✅ Receiver set successfully!');
                 newReceiverInput.value = '';
                 await fetchData();
@@ -196,13 +211,13 @@
             }
         });
 
-        // 6️⃣ Withdraw ASIAX ✅ CORRECTED
+        // ✅ FIXED: Withdraw - CORRECT SYNTAX
         withdrawButton.addEventListener('click', async () => {
             const amount = parseFloat(withdrawAmountInput.value);
             if (!amount || amount <= 0) return alert('❌ Valid amount daalen!');
-            const amountWei = web3.utils.toWei(amount.toString(), 'ether'); // ASIAX = 18 decimals
+            const amountWei = web3.utils.toWei(amount.toString(), 'ether');
             try {
-                await contract.methods.withdrawAsiaX(amountWei).send({ from: account });
+                await sendTx(contract.methods.withdrawAsiaX(amountWei));
                 alert('✅ Withdrawal successful!');
                 withdrawAmountInput.value = '';
                 await fetchData();
@@ -213,7 +228,6 @@
 
         connectWalletBtn.addEventListener('click', initWeb3);
 
-        // Auto-connect
         if (window.ethereum) {
             ethereum.request({ method: 'eth_accounts' }).then(accounts => {
                 if (accounts.length) initWeb3();
