@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AsiaX Owner Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            padding: 10px;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+            backdrop-filter: blur(10px);
+            max-width: 100%;
+            margin: 10px auto;
+        }
+        h1 { text-align: center; margin-bottom: 25px; font-size: 1.8rem; }
+        .btn { border-radius: 50px; padding: 12px; font-weight: bold; transition: all 0.2s; }
+        .btn:hover { transform: scale(1.02); }
+        .form-control { 
+            background: rgba(255, 255, 255, 0.2); 
+            border: none; 
+            color: white; 
+            border-radius: 50px; 
+            padding: 12px; 
+            margin-bottom: 10px;
+        }
+        .form-control::placeholder { color: rgba(255, 255, 255, 0.7); }
+        .info { text-align: center; margin: 15px 0; font-size: 1rem; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 10px; }
+        .section { margin-bottom: 25px; }
+        .section h5 { color: #ffd700; margin-bottom: 10px; }
+        .wallet-address { word-break: break-all; font-size: 0.85rem; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px; }
+        @media (max-width: 576px) {
+            .container { padding: 20px; margin: 5px; }
+            h1 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>👑 AsiaX Owner Panel</h1>
+        
+        <button id="connectWallet" class="btn btn-primary w-100 mb-3">Connect Wallet</button>
+        <p id="walletStatus" class="text-center"></p>
+        
+        <div id="ownerPanel" style="display: none;">
+            <!-- 📊 Current Status -->
+            <div class="info">
+                <p><strong>💰 Current Price:</strong> <span id="currentPrice">-</span></p>
+                <p><strong>🏦 USDT Receiver:</strong> <span id="currentReceiver">-</span></p>
+                <p><strong>💎 Contract ASIAX:</strong> <span id="contractBalance">-</span></p>
+            </div>
+
+            <!-- 1️⃣ Set Price -->
+            <div class="section">
+                <h5>📈 Set Price (ASIAX per 1 USDT)</h5>
+                <input type="number" id="newPrice" class="form-control" placeholder="e.g. 2 (2 ASIAX = 1 USDT)" min="1">
+                <button id="setPriceButton" class="btn btn-warning w-100">Set Price</button>
+            </div>
+
+            <!-- 2️⃣ Set Receiver -->
+            <div class="section">
+                <h5>🏦 Set USDT Receiver</h5>
+                <input type="text" id="newReceiver" class="form-control" placeholder="0x...">
+                <button id="setReceiverButton" class="btn btn-warning w-100">Set Receiver</button>
+            </div>
+
+            <!-- 3️⃣ Withdraw ASIAX -->
+            <div class="section">
+                <h5>💸 Withdraw ASIAX</h5>
+                <input type="number" id="withdrawAmount" class="form-control" placeholder="e.g. 1000" min="0" step="0.01">
+                <button id="withdrawButton" class="btn btn-danger w-100">Withdraw ASIAX</button>
+            </div>
+        </div>
+        
+        <p id="errorMessage" class="text-center text-danger"></p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script>
+        // 🔥 ACTUAL ADDRESSES YAHAN DAALEN
+        const CONTRACT_ADDRESS = '0xd4ac533915357Cf5322e333964575130b42e218C';
+        const ASIAX_ADDRESS = '0xe36b5223d488322fac2ddda937e5ab226e83fbbd';// ✅ CORRECT ABI - EXACT CONTRACT SE
+        const CONTRACT_ABI = [
+            {"inputs":[{"internalType":"uint256","name":"_asiaxPerUSDT","type":"uint256"}],"name":"setPrice","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[{"internalType":"address","name":"_receiver","type":"address"}],"name":"setReceiver","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdrawAsiaX","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[],"name":"asiaxPerUSDT","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"usdtReceiver","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"}
+        ];
+
+        let web3, contract, asiaxContract, account;
+
+        // Elements
+        const connectWalletBtn = document.getElementById('connectWallet');
+        const ownerPanel = document.getElementById('ownerPanel');
+        const errorMessage = document.getElementById('errorMessage');
+        const currentPrice = document.getElementById('currentPrice');
+        const currentReceiver = document.getElementById('currentReceiver');
+        const contractBalance = document.getElementById('contractBalance');
+
+        // Inputs & Buttons
+        const newPriceInput = document.getElementById('newPrice');
+        const setPriceButton = document.getElementById('setPriceButton');
+        const newReceiverInput = document.getElementById('newReceiver');
+        const setReceiverButton = document.getElementById('setReceiverButton');
+        const withdrawAmountInput = document.getElementById('withdrawAmount');
+        const withdrawButton = document.getElementById('withdrawButton');
+
+        // 1️⃣ Connect Wallet
+        async function initWeb3() {
+            if (window.ethereum) {
+                web3 = new Web3(window.ethereum);
+                contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+                asiaxContract = new web3.eth.Contract([{"inputs":[{"internalType":"address","name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"balance","type":"uint256"}],"stateMutability":"view","type":"function"}], ASIAX_ADDRESS);
+                
+                try {
+                    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                    account = accounts[0];
+                    document.getElementById('walletStatus').innerHTML = `✅ Connected: ${account.slice(0,6)}...${account.slice(-4)}`;
+                    connectWalletBtn.innerText = '✅ Connected';
+                    connectWalletBtn.disabled = true;
+                    await checkOwner();
+                } catch (error) {
+                    document.getElementById('walletStatus').innerText = '❌ Connection failed';
+                }
+            } else {
+                alert('📱 Mobile Wallet install karen (MetaMask/Trust Wallet)');
+            }
+        }
+
+        // 2️⃣ Owner Check
+        async function checkOwner() {
+            try {
+                const ownerAddr = await contract.methods.owner().call();
+                if (account.toLowerCase() === ownerAddr.toLowerCase()) {
+                    ownerPanel.style.display = 'block';
+                    errorMessage.innerText = '';
+                    await fetchData();
+                } else {
+                    errorMessage.innerText = '❌ You are NOT the Owner!';
+                }
+            } catch (error) {
+                errorMessage.innerText = '❌ Owner check failed';
+            }
+        }// 3️⃣ Fetch Data
+        async function fetchData() {
+            try {
+                const price = await contract.methods.asiaxPerUSDT().call();
+                const receiver = await contract.methods.usdtReceiver().call();
+                const balanceWei = await asiaxContract.methods.balanceOf(CONTRACT_ADDRESS).call();
+                const balance = web3.utils.fromWei(balanceWei, 'ether');
+
+                currentPrice.innerText = `${price} ASIAX`;
+                currentReceiver.innerHTML = `${receiver.slice(0,6)}...${receiver.slice(-4)}`;
+                contractBalance.innerText = `${parseFloat(balance).toFixed(2)} ASIAX`;
+            } catch (error) {
+                console.error('Fetch error:', error);
+            }
+        }
+
+        // 4️⃣ Set Price
+        setPriceButton.addEventListener('click', async () => {
+            const price = parseInt(newPriceInput.value);
+            if (!price || price <= 0) return alert('❌ Valid price daalen!');
+            try {
+                await contract.methods.setPrice(price).send({ from: account });
+                alert('✅ Price set successfully!');
+                newPriceInput.value = '';
+                await fetchData();
+            } catch (error) {
+                alert('❌ Transaction failed!');
+            }
+        });
+
+        // 5️⃣ Set Receiver
+        setReceiverButton.addEventListener('click', async () => {
+            const receiver = newReceiverInput.value.trim();
+            if (!web3.utils.isAddress(receiver)) return alert('❌ Valid address daalen!');
+            try {
+                await contract.methods.setReceiver(receiver).send({ from: account });
+                alert('✅ Receiver set successfully!');
+                newReceiverInput.value = '';
+                await fetchData();
+            } catch (error) {
+                alert('❌ Transaction failed!');
+            }
+        });
+
+        // 6️⃣ Withdraw ASIAX ✅ CORRECTED
+        withdrawButton.addEventListener('click', async () => {
+            const amount = parseFloat(withdrawAmountInput.value);
+            if (!amount || amount <= 0) return alert('❌ Valid amount daalen!');
+            const amountWei = web3.utils.toWei(amount.toString(), 'ether'); // ASIAX = 18 decimals
+            try {
+                await contract.methods.withdrawAsiaX(amountWei).send({ from: account });
+                alert('✅ Withdrawal successful!');
+                withdrawAmountInput.value = '';
+                await fetchData();
+            } catch (error) {
+                alert('❌ Transaction failed!');
+            }
+        });
+
+        connectWalletBtn.addEventListener('click', initWeb3);
+
+        // Auto-connect
+        if (window.ethereum) {
+            ethereum.request({ method: 'eth_accounts' }).then(accounts => {
+                if (accounts.length) initWeb3();
+            });
+        }
+    </script>
+</body>
+</html>
