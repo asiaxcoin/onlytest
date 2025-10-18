@@ -1,245 +1,140 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>👑 AsiaX Owner Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>👑 Owner Panel - FIXED!</title>
     <style>
-        * { font-family: 'Poppins', sans-serif; }
-        body { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh; padding: 10px; margin: 0;
-        }
-        .container { 
-            background: rgba(255,255,255,0.95); 
-            border-radius: 20px; 
-            padding: 25px; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            max-width: 100%; margin: 10px auto;
-        }
-        h1 { 
-            background: linear-gradient(45deg, #667eea, #764ba2); 
-            -webkit-background-clip: text; 
-            -webkit-text-fill-color: transparent; 
-            text-align: center; margin-bottom: 30px;
-        }
-        .btn { 
-            border-radius: 15px; padding: 12px 20px; 
-            font-weight: 600; border: none; 
-            transition: all 0.3s; 
-        }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        .form-control { 
-            border: 2px solid #e1e5e9; 
-            border-radius: 15px; 
-            padding: 12px 15px; 
-            background: #f8f9fa;
-        }
-        .card { 
-            background: white; 
-            border-radius: 15px; 
-            padding: 20px; 
-            margin-bottom: 20px; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-        }
-        .status { background: linear-gradient(45deg, #f093fb, #f5576c); color: white; padding: 10px; border-radius: 10px; }
-        .loading { opacity: 0.6; }
-        @media (max-width: 576px) { .container { padding: 15px; } h1 { font-size: 1.5rem; } }
+        body { font-family: Arial; max-width: 400px; margin: 50px auto; padding: 20px; }
+        button { width: 100%; padding: 15px; margin: 10px 0; font-size: 16px; }
+        .purple { background: #6f42c1; color: white; border: none; }
+        .orange { background: #fd7e14; color: white; border: none; }
+        input { width: 100%; padding: 12px; margin: 10px 0; font-size: 16px; }
+        #status { color: red; font-weight: bold; padding: 10px; }
+        #info { color: green; padding: 10px; }
+        #test { color: blue; }
     </style>
+    
+    <!-- ✅ WORKING CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1><i class="bi bi-crown"></i> AsiaX Owner Dashboard</h1>
-        
-        <button id="connectWallet" class="btn btn-primary w-100 mb-3"><i class="bi bi-wallet2"></i> Connect Wallet</button>
-        <div id="walletStatus" class="status text-center mb-3"></div>
-        
-        <div id="ownerPanel" style="display: none;">
-            <div class="card">
-                <h5><i class="bi bi-graph-up"></i> Current Status</h5>
-                <p><strong>💰 Price:</strong> <span id="currentPrice">0</span> ASIAX/USDT</p>
-                <p><strong>🏦 Receiver:</strong> <span id="currentReceiver">0x...</span></p>
-                <p><strong>💎 Balance:</strong> <span id="contractBalance">0</span> ASIAX</p>
-                <p><strong>⛽ Gas:</strong> <span id="gasPrice">0</span> Gwei</p>
-            </div>
+    <h1>👑 Owner Panel</h1>
+    
+    <div id="test">Checking Ethers... </div>
+    
+    <button id="connect" class="purple">🔗 Connect 2 Owner</button>
+    <div id="wallet"></div>
+    <div id="info">Price: Loading...</div>
+    
+    <input id="sendamt" type="number" placeholder="AsiaX Send (1000)">
+    <button id="send" class="orange" disabled>📤 Send AsiaX</button>
+    
+    <input id="price" type="number" placeholder="Price (2)">
+    <button id="setprice" class="orange" disabled>💰 Set Price</button>
+    
+    <input id="receiver" type="text" placeholder="Receiver Address">
+    <button id="setrec" class="orange" disabled>🏦 Set Receiver</button>
+    
+    <div id="status"></div>
 
-            <div class="card">
-                <h5><i class="bi bi-currency-exchange"></i> Set Price</h5>
-                <input type="number" id="newPrice" class="form-control mb-2" placeholder="e.g. 15" min="1" step="0.01">
-                <button id="setPriceButton" class="btn btn-warning w-100">
-                    <span id="priceBtnText">Set Price</span>
-                    <span id="priceSpinner" style="display:none;"><i class="bi bi-hourglass-split"></i></span>
-                </button>
-            </div>
-
-            <div class="card">
-                <h5><i class="bi bi-wallet"></i> Set Receiver</h5>
-                <input type="text" id="newReceiver" class="form-control mb-2" placeholder="0x...">
-                <button id="setReceiverButton" class="btn btn-warning w-100">Set Receiver</button>
-            </div>
-
-            <div class="card">
-                <h5><i class="bi bi-cash"></i> Withdraw ASIAX</h5><input type="number" id="withdrawAmount" class="form-control mb-2" placeholder="e.g. 1000" min="0" step="0.01">
-                <button id="withdrawButton" class="btn btn-danger w-100">Withdraw</button>
-            </div>
-        </div>
-        
-        <div id="errorMessage" class="alert alert-danger" style="display: none;"></div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
     <script>
-        // 🔥 YOUR ADDRESSES - REPLACE!
-        const CONTRACT_ADDRESS = '0xCA275a92B4845f3caD2995FaeC00733849C4e6D1';
-        const ASIAX_ADDRESS = '0xe36b5223d488322fac2ddda937e5ab226e83fbbd';
+        // ✅ TEST ETHER FIRST
+        if (typeof ethers === 'undefined') {
+            document.getElementById('test').innerHTML = '❌ Ethers NOT LOADED!';
+            throw new Error('Ethers not loaded');
+        }
+        document.getElementById('test').innerHTML = '✅ Ethers LOADED!';
+        
+        // 🚨 ADDRESSES BADALO!
+        const CONTRACT_ADDR = '0xCA275a92B4845f3caD2995FaeC00733849C4e6D1';
+        const ASIAX_ADDR = '0xe36b5223d488322fac2ddda937e5ab226e83fbbd';
 
-        // ✅ COMPLETE ABI - NO MISSING FUNCTIONS!
-        const ABI = [
-            {"inputs":[{"internalType":"uint256","name":"_humanRate","type":"uint256"}],"name":"setPrice","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"address","name":"_receiver","type":"address"}],"name":"setReceiver","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdrawAsiaX","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[],"name":"getHumanPrice","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"usdtReceiver","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"address","name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"balance","type":"uint256"}],"stateMutability":"view","type":"function"}
+        const abi = [
+            "function setPrice(uint256) external",
+            "function setReceiver(address) external",
+            "function getHumanPrice() view returns(uint256)",
+            "function owner() view returns(address)"
         ];
+        const erc20 = ["function transfer(address,uint256)", "function decimals() view returns(uint8)"];
 
-        let web3, contract, asiaxContract, account;
+        let wallet, contract, token;
 
-        // Elements
-        const connectWalletBtn = document.getElementById('connectWallet');
-        const ownerPanel = document.getElementById('ownerPanel');
-        const errorMsg = document.getElementById('errorMessage');
-        const currentPrice = document.getElementById('currentPrice');
-        const currentReceiver = document.getElementById('currentReceiver');
-        const contractBalance = document.getElementById('contractBalance');
-        const gasPriceEl = document.getElementById('gasPrice');
-        const setPriceBtn = document.getElementById('setPriceButton');
-
-        async function init() {
-            if (!window.ethereum) return alert('📱 Wallet install karen!');
-            
-            web3 = new Web3(window.ethereum);
-            contract = new web3.eth.Contract(ABI, CONTRACT_ADDRESS);
-            asiaxContract = new web3.eth.Contract([{"inputs":[{"internalType":"address","name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"balance","type":"uint256"}],"stateMutability":"view","type":"function"}], ASIAX_ADDRESS);
-            
-            try {
-                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-                account = accounts[0];
-                document.getElementById('walletStatus').innerHTML = `<i class="bi bi-check-circle"></i> ${account.slice(0,6)}...${account.slice(-4)}`;
-                connectWalletBtn.innerText = '✅ Connected';
-                connectWalletBtn.disabled = true;
-                await checkOwner();
-            } catch (error) {
-                showError('❌ Wallet connection failed!');
-            }
-        }
-
-        async function checkOwner() {
-            try {
-                const owner = await contract.methods.owner().call();
-                if (account.toLowerCase() === owner.toLowerCase()) {ownerPanel.style.display = 'block';
-                    await loadData();
-                } else {
-                    showError('❌ You are NOT the Owner!');
+        document.getElementById('connect').onclick = async () => {
+            if (window.ethereum) {
+                try {
+                    await window.ethereum.enable();
+                    const provider = new ethers.providers.Web3Provider(window.ethereum);
+                    const signer = provider.getSigner();
+                    wallet = await signer.getAddress();
+                    
+                    contract = new ethers.Contract(CONTRACT_ADDR, abi, signer);
+                    token = new ethers.Contract(ASIAX_ADDR, erc20, signer);
+                    
+                    const owner = await contract.owner();
+                    if (wallet.toLowerCase() != owner.toLowerCase()) {
+                        alert('❌ OWNER WALLET NAHI!');
+                        return;
+                    }
+                    
+                    document.getElementById('wallet').innerHTML = 
+                        '✅ Owner: ' + wallet.substring(0,6) + '...' + wallet.substring(38);
+                    
+                    loadPrice();
+                    document.querySelectorAll('button[disabled]').forEach(b => b.disabled = false);
+                    
+                } catch(e) {
+                    document.getElementById('status').innerHTML = '❌ ' + e.message;
                 }
-            } catch (error) {
-                showError('❌ Contract error! Address check karen.');
-            }
-        }
-
-        async function loadData() {
-            try {
-                const price = await contract.methods.getHumanPrice().call();
-                const receiver = await contract.methods.usdtReceiver().call();
-                const balance = await asiaxContract.methods.balanceOf(CONTRACT_ADDRESS).call();
-                const gas = await web3.eth.getGasPrice();
-                const gasGwei = web3.utils.fromWei(gas, 'gwei');
-                const balanceHuman = web3.utils.fromWei(balance, 'ether');
-                
-                currentPrice.textContent = price;
-                currentReceiver.innerHTML = `${receiver.slice(0,6)}...${receiver.slice(-4)}`;
-                contractBalance.textContent = parseFloat(balanceHuman).toFixed(2);
-                gasPriceEl.textContent = parseFloat(gasGwei).toFixed(1);
-            } catch (error) {
-                showError('❌ Data load failed!');
-            }
-        }
-
-        // ✅ FIXED: Perfect Transaction Function
-        async function sendTx(method) {
-            try {
-                setPriceBtn.classList.add('loading');
-                document.getElementById('priceBtnText').style.display = 'none';
-                document.getElementById('priceSpinner').style.display = 'inline';
-                
-                const gasEstimate = await method.estimateGas({ from: account });
-                const gasPrice = await web3.eth.getGasPrice();
-                const gasLimit = Math.ceil(gasEstimate * 1.2);
-                
-                await method.send({ 
-                    from: account, 
-                    gas: gasLimit, 
-                    gasPrice 
-                });
-                
-                return true;
-            } catch (error) {
-                console.error('TX ERROR:', error);
-                throw error;
-            } finally {
-                setPriceBtn.classList.remove('loading');
-                document.getElementById('priceBtnText').style.display = 'inline';
-                document.getElementById('priceSpinner').style.display = 'none';
-            }
-        }
-
-        // ✅ FIXED: Set Price - 15 PERFECTLY WORKS!
-        document.getElementById('setPriceButton').onclick = async () => {
-            const price = parseFloat(document.getElementById('newPrice').value);
-            if (!price || price <= 0) return showError('❌ Enter valid price (e.g. 15)!');
-            
-            try {
-                await sendTx(contract.methods.setPrice(price));
-                alert(`✅ Price set to ${price} ASIAX/USDT!`);
-                document.getElementById('newPrice').value = '';
-                await loadData();
-            } catch (error) {
-                let msg = '❌ Transaction Failed!\n';
-                if (error.message.includes('insufficient funds')) msg += '💰 Low ETH for gas!';
-                else if (error.message.includes('gas price')) msg += '⛽ High gas! Wait or adjust.';
-                else msg += error.message;
-                showError(msg);
+            } else {
+                alert('MetaMask install karo!');
             }
         };
 
-        // Other buttons (same as before)
-        document.getElementById('setReceiverButton').onclick = async () => {
-            const addr = document.getElementById('newReceiver').value.trim();
-            if (!web3.utils.isAddress(addr)) return showError('❌ Valid address!');
-            await sendTx(contract.methods.setReceiver(addr));
-            alert('✅ Receiver Set!');
-            document.getElementById('newReceiver').value = '';
-            loadData();
-        };document.getElementById('withdrawButton').onclick = async () => {
-            const amount = parseFloat(document.getElementById('withdrawAmount').value);
-            if (!amount || amount <= 0) return showError('❌ Valid amount!');
-            const wei = web3.utils.toWei(amount.toString(), 'ether');
-            await sendTx(contract.methods.withdrawAsiaX(wei));
-            alert('✅ Withdrawn!');
-            document.getElementById('withdrawAmount').value = '';
-            loadData();
+        async function loadPrice() {
+            try {
+                const price = await contract.getHumanPrice();
+                document.getElementById('info').innerHTML = '💰 1 USDT = ' + price + ' AsiaX';
+            } catch(e) {
+                document.getElementById('info').innerHTML = '❌ Price nahi set';
+            }
+        }
+document.getElementById('send').onclick = async () => {
+            document.getElementById('status').innerHTML = '⏳ Sending...';
+            try {
+                const amt = document.getElementById('sendamt').value;
+                const dec = await token.decimals();
+                const units = ethers.utils.parseUnits(amt, dec);
+                const tx = await token.transfer(CONTRACT_ADDR, units);
+                await tx.wait();
+                document.getElementById('status').innerHTML = '✅ Sent!';
+            } catch(e) {
+                document.getElementById('status').innerHTML = '❌ ' + e.message;
+            }
         };
 
-        function showError(msg) { 
-            errorMsg.innerHTML = <strong>${msg}</strong>; 
-            errorMsg.style.display = 'block'; 
-            setTimeout(() => errorMsg.style.display = 'none', 5000);
-        }
+        document.getElementById('setprice').onclick = async () => {
+            document.getElementById('status').innerHTML = '⏳ Setting price...';
+            try {
+                const price = document.getElementById('price').value;
+                const tx = await contract.setPrice(price);
+                await tx.wait();
+                document.getElementById('status').innerHTML = '✅ Price Set!';
+                loadPrice();
+            } catch(e) {
+                document.getElementById('status').innerHTML = '❌ ' + e.message;
+            }
+        };
 
-        connectWalletBtn.onclick = init;
+        document.getElementById('setrec').onclick = async () => {
+            document.getElementById('status').innerHTML = '⏳ Setting receiver...';
+            try {
+                const addr = document.getElementById('receiver').value;
+                const tx = await contract.setReceiver(addr);
+                await tx.wait();
+                document.getElementById('status').innerHTML = '✅ Receiver Set!';
+            } catch(e) {
+                document.getElementById('status').innerHTML = '❌ ' + e.message;
+            }
+        };
     </script>
 </body>
 </html>
