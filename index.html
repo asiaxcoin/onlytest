@@ -1,140 +1,378 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="hi">
 <head>
-    <title>👑 Owner Panel - FIXED!</title>
-    <style>
-        body { font-family: Arial; max-width: 400px; margin: 50px auto; padding: 20px; }
-        button { width: 100%; padding: 15px; margin: 10px 0; font-size: 16px; }
-        .purple { background: #6f42c1; color: white; border: none; }
-        .orange { background: #fd7e14; color: white; border: none; }
-        input { width: 100%; padding: 12px; margin: 10px 0; font-size: 16px; }
-        #status { color: red; font-weight: bold; padding: 10px; }
-        #info { color: green; padding: 10px; }
-        #test { color: blue; }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>ASIAX TREE - Mobile UI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #0a0e1a; --card: rgba(20, 30, 50, 0.8); --glass: rgba(255,255,255,0.05);
+      --accent: #00d4ff; --success: #00ff88; --warning: #ffaa00; --error: #ff4757; --muted: #a0b0c0;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height:100%; font-family:'Inter',system-ui,sans-serif; }
+    body {
+      background: linear-gradient(135deg, #0a0e1a 0%, #1a1f2e 50%, #0a0e1a 100%);
+      color: #e8f0ff; padding-bottom: 20px; overflow-x: hidden;
+    }
+    .app { max-width: 420px; margin: 0 auto; padding: 16px; }
     
-    <!-- ✅ WORKING CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px; margin-bottom: 16px; backdrop-filter: blur(20px);
+      background: rgba(10,14,26,0.8); border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .custom-logo { width: 120px; height: 48px; object-fit: contain; }
+    
+    .status {
+      padding: 12px; border-radius: 12px; text-align: center; font-size: 0.85rem; font-weight: 500;
+      background: var(--glass); border: 1px solid rgba(255,255,255,0.1); margin-bottom: 16px;
+    }
+    .status.success { background: rgba(0,255,136,0.1); color: var(--success); border-color: var(--success); }
+    .status.error { background: rgba(255,71,87,0.1); color: var(--error); border-color: var(--error); }
+    
+    .card-app {
+      background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;
+      padding: 20px; margin-bottom: 16px; backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3); animation: float 6s ease-in-out infinite;
+    }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+    
+    .btn-modern {
+      border-radius: 16px; padding: 14px 20px; font-weight: 600; border: none; transition: all 0.3s;
+      min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), #00ff88); color: #000; }
+    .btn-modern:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,212,255,0.4); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+    
+    .btn-home {
+      background: linear-gradient(135deg, var(--accent), #00ff88); color: #000;
+      border-radius: 12px; padding: 8px 16px; font-size: 0.85rem; font-weight: 600;
+      min-height: auto; min-width: 70px; white-space: nowrap;
+    }
+    
+    .tree-header {
+      text-align: center; margin-bottom: 16px;
+      font-size: 1.3rem; font-weight: 700; color: var(--accent);
+    }
+    
+    .tree-container {
+      max-height: 65vh; overflow-y: auto;
+      background: rgba(0,212,255,0.05); border-radius: 12px; padding: 12px;
+      border: 1px solid rgba(0,212,255,0.1);
+      scroll-behavior: smooth;
+    }
+    
+    /* 🔥 PERFECT TREE VIEWING - FIXED! */
+    .tree-node {
+      background: rgba(255,255,255,0.02); 
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px; 
+      padding: 12px; 
+      margin-bottom: 8px; /* TIGHT SPACING */
+      cursor: pointer; 
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      user-select: none;}
+    .tree-node:hover {
+      background: rgba(0,212,255,0.15); 
+      border-color: var(--accent);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,212,255,0.2);
+    }
+    .tree-node.expanded { 
+      border-color: var(--accent); 
+      background: rgba(0,212,255,0.08);
+    }
+    
+    .tree-address {
+      font-size: 0.9rem; 
+      color: var(--success);
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between;
+      gap: 12px;
+      padding-right: 8px;
+    }
+    .address-text {
+      flex: 1; 
+      font-weight: 500;
+      word-break: break-all;
+    }
+    
+    /* 🔥 PERFECT COLLAPSE/EXPAND ANIMATION */
+    .tree-children {
+      margin-left: 24px; /* CLEAR INDENT */
+      margin-top: 8px; 
+      overflow: hidden; 
+      max-height: 0;
+      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s;
+      border-left: 2px solid rgba(0,212,255,0.3); 
+      padding-left: 12px;
+    }
+    .tree-node.expanded .tree-children { 
+      max-height: 2000px; 
+      margin-top: 12px; 
+    }
+    
+    .tree-toggle { 
+      font-size: 1.2rem; 
+      color: var(--accent); 
+      min-width: 24px;
+      text-align: center;
+      transition: all 0.3s;
+    }
+    .tree-node.expanded .tree-toggle { 
+      transform: rotate(45deg); 
+      color: var(--success);
+    }
+    
+    .copy-btn {
+      color: var(--muted); 
+      cursor: pointer;
+      margin-left: 8px;
+      transition: color 0.3s;
+    }
+    .copy-btn:hover { color: var(--success); }
+    
+    .no-referrals {
+      color: var(--muted); padding: 16px; text-align: center; font-style: italic;
+      font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 8px;
+    }
+    
+    .loader {
+      text-align: center; padding: 20px; color: var(--accent);
+      font-size: 1rem; animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    
+    .user-info {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+    }
+    
+    @media (max-width: 360px) { 
+      .app { padding: 12px; } 
+      .card-app { padding: 16px; } 
+      .tree-address { font-size: 0.85rem; }
+      .tree-node { padding: 10px; margin-bottom: 6px; }
+    }
+  </style>
 </head>
 <body>
-    <h1>👑 Owner Panel</h1>
-    
-    <div id="test">Checking Ethers... </div>
-    
-    <button id="connect" class="purple">🔗 Connect 2 Owner</button>
-    <div id="wallet"></div>
-    <div id="info">Price: Loading...</div>
-    
-    <input id="sendamt" type="number" placeholder="AsiaX Send (1000)">
-    <button id="send" class="orange" disabled>📤 Send AsiaX</button>
-    
-    <input id="price" type="number" placeholder="Price (2)">
-    <button id="setprice" class="orange" disabled>💰 Set Price</button>
-    
-    <input id="receiver" type="text" placeholder="Receiver Address">
-    <button id="setrec" class="orange" disabled>🏦 Set Receiver</button>
-    
-    <div id="status"></div>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <img src="prologo.png" class="custom-logo" alt="ASIAX" />
+      </div>
+      <button id="connectBtn" class="btn btn-modern btn-primary">
+        <i class="fas fa-wallet"></i> <span id="connectLabel">Connect</span>
+      </button>
+    </div>
 
-    <script>
-        // ✅ TEST ETHER FIRST
-        if (typeof ethers === 'undefined') {
-            document.getElementById('test').innerHTML = '❌ Ethers NOT LOADED!';
-            throw new Error('Ethers not loaded');
+    <div id="status" class="status">Ready — Connect Wallet</div>
+
+    <div class="card-app">
+      <div class="user-info">
+        <div>
+          <div style="color: var(--muted); font-size: 0.8rem;">Address</div>
+          <div id="userAddress" style="font-weight:700;font-size:1.1rem">Not Connected</div>
+        </div>
+        <button id="backHome" class="btn-home" style="display:none;">
+          <i class="fas fa-home"></i> Home
+        </button>
+      </div>
+    </div>
+
+    <div class="card-app">
+      <div class="tree-header">
+        <i class="fas fa-sitemap" style="font-size:1.5rem;margin-right:8px"></i>
+        My Referral Tree
+      </div>
+      <button id="loadTree" class="btn-modern btn-primary w-100" disabled>
+        <i class="fas fa-tree"></i> Load Tree
+      </button>
+      <div id="loader" class="loader" style="display:none;">
+        <i class="fas fa-spinner fa-spin"></i> Loading tree data...
+      </div>
+      <div id="treeContainer" class="tree-container" style="display:none;"></div>
+    </div>
+  </div>
+
+  <script>
+    const CONTRACT_ADDR = '0xF6d0d72AAf0Bbf5C459E680f1e6E75E3B1ce1f06';
+    const HOME_PAGE = 'axmenu.html';
+    const POLYGON_CHAIN_ID = "0x89";
+    let wallet, provider;
+    let referrals = {};document.getElementById('connectBtn').onclick = async () => {
+      if (window.ethereum) {
+        try {
+          const chainId = await window.ethereum.request({ method: "eth_chainId" });
+          if (chainId !== POLYGON_CHAIN_ID) {
+            alert('Please switch MetaMask to Polygon Mainnet!');
+            return;
+          }
+
+          await window.ethereum.request({ method: "eth_requestAccounts" });
+          provider = new ethers.providers.Web3Provider(window.ethereum);
+          wallet = await provider.getSigner().getAddress();
+          
+          document.getElementById('userAddress').innerHTML = wallet.substring(0,6) + '...' + wallet.substring(38);
+          document.getElementById('connectLabel').innerHTML = 'Connected';
+          document.getElementById('connectBtn').disabled = true;
+          document.getElementById('backHome').style.display = 'block';
+          document.getElementById('loadTree').disabled = false;
+          
+          document.getElementById('status').innerHTML = '✅ Wallet Connected!';
+          document.getElementById('status').className = 'status success';
+        } catch(e) {
+          document.getElementById('status').innerHTML = '❌ ' + e.message;
+          document.getElementById('status').className = 'status error';
         }
-        document.getElementById('test').innerHTML = '✅ Ethers LOADED!';
+      } else {
+        alert('MetaMask install karo!');
+      }
+    };
+
+    document.getElementById('loadTree').onclick = async () => {
+      try {
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('treeContainer').style.display = 'none';
+        document.getElementById('status').innerHTML = '⏳ Loading Tree...';
+        document.getElementById('status').className = 'status';
         
-        // 🚨 ADDRESSES BADALO!
-        const CONTRACT_ADDR = '0xCA275a92B4845f3caD2995FaeC00733849C4e6D1';
-        const ASIAX_ADDR = '0xe36b5223d488322fac2ddda937e5ab226e83fbbd';
+        await loadReferralTree();
+        
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('treeContainer').style.display = 'block';
+        document.getElementById('status').innerHTML = `✅ Tree Loaded! ${getTotalMembers()} Members`;
+        document.getElementById('status').className = 'status success';
+      } catch(e) {
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('status').innerHTML = '❌ Error loading tree!';
+        document.getElementById('status').className = 'status error';
+        console.error(e);
+      }
+    };
 
-        const abi = [
-            "function setPrice(uint256) external",
-            "function setReceiver(address) external",
-            "function getHumanPrice() view returns(uint256)",
-            "function owner() view returns(address)"
-        ];
-        const erc20 = ["function transfer(address,uint256)", "function decimals() view returns(uint8)"];
-
-        let wallet, contract, token;
-
-        document.getElementById('connect').onclick = async () => {
-            if (window.ethereum) {
-                try {
-                    await window.ethereum.enable();
-                    const provider = new ethers.providers.Web3Provider(window.ethereum);
-                    const signer = provider.getSigner();
-                    wallet = await signer.getAddress();
-                    
-                    contract = new ethers.Contract(CONTRACT_ADDR, abi, signer);
-                    token = new ethers.Contract(ASIAX_ADDR, erc20, signer);
-                    
-                    const owner = await contract.owner();
-                    if (wallet.toLowerCase() != owner.toLowerCase()) {
-                        alert('❌ OWNER WALLET NAHI!');
-                        return;
-                    }
-                    
-                    document.getElementById('wallet').innerHTML = 
-                        '✅ Owner: ' + wallet.substring(0,6) + '...' + wallet.substring(38);
-                    
-                    loadPrice();
-                    document.querySelectorAll('button[disabled]').forEach(b => b.disabled = false);
-                    
-                } catch(e) {
-                    document.getElementById('status').innerHTML = '❌ ' + e.message;
-                }
-            } else {
-                alert('MetaMask install karo!');
-            }
-        };
-
-        async function loadPrice() {
-            try {
-                const price = await contract.getHumanPrice();
-                document.getElementById('info').innerHTML = '💰 1 USDT = ' + price + ' AsiaX';
-            } catch(e) {
-                document.getElementById('info').innerHTML = '❌ Price nahi set';
-            }
+    async function loadReferralTree() {
+      const contract = new ethers.Contract(CONTRACT_ADDR, [
+        "event UserJoined(address indexed user, address indexed referrer, uint256 amount, uint256 netInvestment)"
+      ], provider);
+      
+      const latestBlock = await provider.getBlockNumber();
+      const fromBlock = Math.max(0, latestBlock - 10000);
+      
+      const filter = contract.filters.UserJoined();
+      filter.fromBlock = fromBlock;
+      filter.toBlock = 'latest';
+      
+      const events = await contract.queryFilter(filter);
+      
+      referrals = {};
+      
+      events.forEach(event => {
+        const referrer = event.args.referrer.toLowerCase();
+        const user = event.args.user.toLowerCase();
+        
+        if (referrer !== '0x0000000000000000000000000000000000000000') {
+          if (!referrals[referrer]) referrals[referrer] = [];
+          if (!referrals[referrer].includes(user)) {
+            referrals[referrer].push(user);
+          }
         }
-document.getElementById('send').onclick = async () => {
-            document.getElementById('status').innerHTML = '⏳ Sending...';
-            try {
-                const amt = document.getElementById('sendamt').value;
-                const dec = await token.decimals();
-                const units = ethers.utils.parseUnits(amt, dec);
-                const tx = await token.transfer(CONTRACT_ADDR, units);
-                await tx.wait();
-                document.getElementById('status').innerHTML = '✅ Sent!';
-            } catch(e) {
-                document.getElementById('status').innerHTML = '❌ ' + e.message;
-            }
-        };
+      });
+      
+      const treeContainer = document.getElementById('treeContainer');
+      treeContainer.innerHTML = '';
+      buildTreeNode(wallet.toLowerCase(), treeContainer, 0);
+    }
 
-        document.getElementById('setprice').onclick = async () => {
-            document.getElementById('status').innerHTML = '⏳ Setting price...';
-            try {
-                const price = document.getElementById('price').value;
-                const tx = await contract.setPrice(price);
-                await tx.wait();
-                document.getElementById('status').innerHTML = '✅ Price Set!';
-                loadPrice();
-            } catch(e) {
-                document.getElementById('status').innerHTML = '❌ ' + e.message;
-            }
-        };
+    function buildTreeNode(address, parentElement, level) {
+      if (level > 5) return;
+      
+      const node = document.createElement('div');
+      node.className = 'tree-node';
+      
+      const count = referrals[address] ? referrals[address].length : 0;
+      node.innerHTML =  `
+        <div class="tree-address">
+          <span class="address-text">${address.substring(0,6)}...${address.substring(38)}</span>
+          <i class="fas fa-copy copy-btn" title="Copy Address"></i>
+          <span class="tree-toggle">${count > 0 ? '+' : ''}</span>
+        </div>
+        <div class="tree-children"></div>
+      `;
+      
+      const addressDiv = node.querySelector('.tree-address');
+      const copyBtn = node.querySelector('.copy-btn');
+      
+      // 🔥 PERFECT TOUCH + CLICK
+      addressDiv.onclick = toggleNode;
+      addressDiv.ontouchend = toggleNode;
+      
+      // 🔥 COPY FUNCTION
+      copyBtn.onclick = (e) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(address).then(() => {
+          alert('✅ Address Copied!');
+        });
+      };
+      
+      function toggleNode() {
+        const node = this.closest('.tree-node');
+        const children = node.querySelector('.tree-children');
+        const toggle = this.querySelector('.tree-toggle');
+        
+        if (!node.classList.contains('expanded')) {
+          // EXPAND - SMOOTH!
+          node.classList.add('expanded');
+          children.style.maxHeight = '2000px';
+          toggle.innerHTML = count > 0 ? '−' : '';
+          
+          // Auto scroll to see children
+          setTimeout(() => {
+            node.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }, 200);
+          
+          // Load children if empty
+          if (children.innerHTML.trim() === '' && count > 0) {
+            const childrenList = referrals[address] || [];
+            childrenList.forEach(child => {
+              buildTreeNode(child, children, level + 1);
+            });
+          }
+        } else {
+          // COLLAPSE - SMOOTH!
+          node.classList.remove('expanded');
+          children.style.maxHeight = '0';
+          toggle.innerHTML = count > 0 ? '+' : '';
+        }
+      }
+      
+      parentElement.appendChild(node);
+    }
 
-        document.getElementById('setrec').onclick = async () => {
-            document.getElementById('status').innerHTML = '⏳ Setting receiver...';
-            try {
-                const addr = document.getElementById('receiver').value;
-                const tx = await contract.setReceiver(addr);
-                await tx.wait();
-                document.getElementById('status').innerHTML = '✅ Receiver Set!';
-            } catch(e) {
-                document.getElementById('status').innerHTML = '❌ ' + e.message;
-            }
-        };
-    </script>
+    function getTotalMembers() {
+      let total = 0;
+      function countChildren(addr, level) {
+        if (level > 5) return;
+        const children = referrals[addr] || [];
+        total += children.length;
+        children.forEach(child => countChildren(child, level + 1));
+      }
+      countChildren(wallet.toLowerCase(), 0);
+      return total;
+    }
+
+    document.getElementById('backHome').onclick = () => {
+      window.location.href = HOME_PAGE;
+    };
+  </script>
 </body>
 </html>
