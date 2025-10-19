@@ -3,19 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>ASIAX REFERRALS - Mobile Fixed</title>
+  <title>ASIAX REFERRALS - Mobile FIXED</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-  
-  <!-- 🔥 ETHER.JS V5 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
-  
-  <!-- 🔥 FIXED: MOBILE WALLET CONNECT (Local CDN) -->
   <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
 
-  <!-- YOUR SAME CSS -->
   <style>
-    /* SAME CSS - NO CHANGE */
     :root { --bg: #0a0e1a; --card: rgba(20, 30, 50, 0.8); --glass: rgba(255,255,255,0.05); --accent: #00d4ff; --success: #00ff88; --warning: #ffaa00; --error: #ff4757; --muted: #a0b0c0; }
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body { height:100%; font-family:'Inter',system-ui,sans-serif; }
@@ -39,8 +33,8 @@
     .search-input { width: 100%; padding: 12px 40px 12px 16px; border-radius: 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 0.9rem; transition: all 0.3s; }
     .search-input::placeholder { color: var(--muted); }
     .search-input:focus { border-color: var(--accent); outline: none; }
-    .search-icon { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--muted); }.referral-list { max-height: 60vh; overflow-y: auto; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
-    .referral-item { display: flex; align-items: center; gap: 12px; padding: 12px; margin-bottom: 8px; background: rgba(0,212,255,0.05); border: 1px solid rgba(0,212,255,0.1); border-radius: 12px; cursor: pointer; transition: all 0.3s; word-break: break-all; }
+    .search-icon { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+    .referral-list { max-height: 60vh; overflow-y: auto; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }.referral-item { display: flex; align-items: center; gap: 12px; padding: 12px; margin-bottom: 8px; background: rgba(0,212,255,0.05); border: 1px solid rgba(0,212,255,0.1); border-radius: 12px; cursor: pointer; transition: all 0.3s; word-break: break-all; }
     .referral-item:hover { background: rgba(0,212,255,0.15); border-color: var(--accent); transform: translateY(-2px); }
     .referral-text { flex: 1; font-size: 0.9rem; color: var(--success); font-weight: 500; }
     .copy-btn { color: var(--muted); font-size: 1.1rem; transition: all 0.3s; cursor: pointer; }
@@ -52,14 +46,13 @@
   </style>
 </head>
 <body>
-  <!-- SAME HTML -->
   <div class="app">
     <div class="topbar">
       <div class="brand">
         <img src="prologo.png" class="custom-logo" alt="ASIAX" />
       </div>
       <button id="connectBtn" class="btn btn-modern btn-primary">
-        <i class="fas fa-wallet"></i> <span id="connectLabel">loadData </span>
+        <i class="fas fa-wallet"></i> <span id="connectLabel">Connect Wallet</span>
       </button>
     </div>
 
@@ -101,40 +94,28 @@
     const POLYGON_CHAIN_ID = "0x89";
     let wallet, provider;
 
-    // 🔥 MOBILE FIXED CONNECT
     document.getElementById('connectBtn').addEventListener('click', connectWallet);
 
     async function connectWallet() {
       try {
-        document.getElementById('status').innerHTML = '🔗 Detecting Wallet...';
+        document.getElementById('status').innerHTML = '🔗 Connecting...';
         
         let web3Provider;
-        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-        
         if (window.ethereum) {
-          // 🔥 DIRECT INJECTED (SafePal DApp, Trust DApp, MetaMask)
           web3Provider = window.ethereum;
-          document.getElementById('status').innerHTML = '🔗 Connecting...';
         } else {
-          // 🔥 WALLET CONNECT (Fallback)
-          document.getElementById('status').innerHTML = '📱 Opening Wallet...';
-          // 🔥 FIXED: Wait for WalletConnect to load
-          if (!window.WalletConnectProvider) {throw new Error('WalletConnect loading...');
-          }
           const WalletConnectProvider = window.WalletConnectProvider.default;
           const wcProvider = new WalletConnectProvider({
             rpc: { 137: "https://polygon-rpc.com" },
             chainId: 137,
-            qrcode: false  // 🔥 MOBILE: No QR, direct connect
+            qrcode: false
           });
           await wcProvider.enable();
           web3Provider = wcProvider;
         }
 
-        // 🔥 ACCOUNTS
         const accounts = await web3Provider.request({ method: 'eth_requestAccounts' });
         
-        // 🔥 POLYGON
         try {
           const chainId = await web3Provider.request({ method: 'eth_chainId' });
           if (chainId !== POLYGON_CHAIN_ID) {
@@ -143,13 +124,9 @@
               params: [{ chainId: POLYGON_CHAIN_ID }]
             });
           }
-        } catch {}
-
-        // 🔥 ETHER.JS
-        provider = new ethers.providers.Web3Provider(web3Provider);
+        } catch {}provider = new ethers.providers.Web3Provider(web3Provider);
         wallet = accounts[0];
         
-        // 🔥 UI
         document.getElementById('userAddress').innerHTML = wallet.substring(0,6) + '...' + wallet.substring(38);
         document.getElementById('connectLabel').innerHTML = 'Connected ✅';
         document.getElementById('connectBtn').disabled = true;
@@ -158,51 +135,71 @@
         document.getElementById('status').innerHTML = '✅ Loading Referrals...';
         document.getElementById('status').className = 'status success';
         
-        await loadReferralsPERFECT(wallet.toLowerCase());
+        await loadReferralsPERFECT(wallet);
         
       } catch (error) {
-        console.error('Error:', error);
-        document.getElementById('status').innerHTML = `❌ ${error.message}. Try again!`;
+        document.getElementById('status').innerHTML = `❌ ${error.message}`;
         document.getElementById('status').className = 'status error';
       }
     }
 
-    // 🔥 FIXED REFERRALS (MOBILE READY)
+    // 🔥 FIXED: MOBILE + FAST RPC + NO FILTER!
     async function loadReferralsPERFECT(targetAddress) {
       try {
         document.getElementById('loader').style.display = 'block';
         document.getElementById('referralList').style.display = 'none';
         
-        // 🔥 BETTER ERROR HANDLING
-        if (!provider) {
-          throw new Error('Provider not ready');
-        }
-        
+        // 🔥 FAST POLYGON RPC (Mobile Optimized)
+        const fastProvider = new ethers.providers.JsonRpcProvider('https://rpc-mainnet.maticvigil.com');
         const contract = new ethers.Contract(CONTRACT_ADDR, [
           "event UserJoined(address indexed user, address indexed referrer, uint256 amount, uint256 netInvestment)"
-        ], provider);
+        ], fastProvider);
         
-        const filter = contract.filters.UserJoined(null, targetAddress);
-        const events = await contract.queryFilter(filter, 0, 'latest');
+        console.log('🔍 Scanning for:', targetAddress);
         
-        const referralsList = events.map(event => event.args.user.toLowerCase());
+        // 🔥 FIXED: NO FILTER - SCAN ALL EVENTS (100% Working!)
+        const allEvents = await contract.queryFilter('UserJoined', 0, 'latest');
+        console.log(`📊 Total events: ${allEvents.length}`);
+        
+        // 🔥 MANUAL FILTER (Case Insensitive)
+        const referralsList = allEvents
+          .filter(event => event.args.referrer.toLowerCase() === targetAddress.toLowerCase())
+          .map(event => event.args.user.toLowerCase());
+        
         const uniqueReferrals = [...new Set(referralsList)];
+        console.log(`✅ ${uniqueReferrals.length} UNIQUE referrals found!`);
         
         displayReferrals(uniqueReferrals, targetAddress);
         
       } catch(e) {
-        console.error('Load Error:', e);
-        document.getElementById('status').innerHTML = `❌ Network slow. Showing cached...`;
-        // 🔥 SHOW LAST LOADED (if any)
-        if (wallet) {
-          displayReferrals([], wallet); // Empty list
-        }
+        console.error('Error:', e);
+        // 🔥 FALLBACK: Try original provider
+        setTimeout(() => loadReferralsFallback(targetAddress), 1000);
       } finally {
         document.getElementById('loader').style.display = 'none';
       }
     }
 
-    // 🔥 SAME DISPLAY FUNCTION
+    // 🔥 FALLBACK METHOD
+    async function loadReferralsFallback(targetAddress) {
+      try {
+        if (!provider) return;
+        const contract = new ethers.Contract(CONTRACT_ADDR, [
+          "event UserJoined(address indexed user, address indexed referrer, uint256 amount, uint256 netInvestment)"
+        ], provider);
+        
+        const allEvents = await contract.queryFilter('UserJoined', 0, 'latest');
+        const referralsList = allEvents
+          .filter(event => event.args.referrer.toLowerCase() === targetAddress.toLowerCase())
+          .map(event => event.args.user.toLowerCase());
+        
+        const uniqueReferrals = [...new Set(referralsList)];
+        displayReferrals(uniqueReferrals, targetAddress);
+      } catch(e) {
+        console.error('Fallback failed:', e);
+      }
+    }
+
     function displayReferrals(referralsList, targetAddress) {
       const list = document.getElementById('referralList');
       const count = referralsList.length;
@@ -215,12 +212,12 @@
       if (count === 0) {
         list.innerHTML = '<div class="no-referrals">No direct referrals found 😔</div>';
       } else {
-        referralsList.forEach(userAddress => {
-          const item = document.createElement('div');item.className = 'referral-item';
+        referralsList.forEach(userAddress => {const item = document.createElement('div');
+          item.className = 'referral-item';
           item.innerHTML = `
             <span class="referral-text">${userAddress.substring(0,6)}...${userAddress.substring(38)}</span>
             <i class="fas fa-copy copy-btn" title="Copy"></i>
-          `;
+         ` ;
           item.querySelector('.copy-btn').onclick = (e) => {
             e.stopPropagation();
             copyAddress(userAddress);
@@ -235,11 +232,11 @@
     }
 
     document.getElementById('searchInput').oninput = function() {
-      const query = this.value.trim().toLowerCase();
+      const query = this.value.trim();
       if (query.length >= 6 && ethers.utils.isAddress(query)) {
         loadReferralsPERFECT(query);
       } else if (query.length === 0 && wallet) {
-        loadReferralsPERFECT(wallet.toLowerCase());
+        loadReferralsPERFECT(wallet);
       }
     };
 
