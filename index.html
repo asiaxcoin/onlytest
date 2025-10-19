@@ -418,40 +418,70 @@
     }
   };
 
-  async function loadDirectReferrals() {
-    if (!provider) {
-      throw new Error('Wallet not connected');
-    }
-    // Minimal ABI: event UserJoined(address indexed user, address indexed referrer, uint256 amount, uint256 netInvestment)
-    const contract = new ethers.Contract(CONTRACT_ADDR, [
-      "event UserJoined(address indexed user, address indexed referrer, uint256 amount, uint256 netInvestment)"
-    ], provider);
-
-    const filter = contract.filters.UserJoined();
-    // queryFilter can be heavy on mainnet; option: limit blocks (not implemented here)
-    const events = await contract.queryFilter(filter);
-    directReferrals = [];
-    events.forEach(event => {
-      try {
-        const referrer = event.args.referrer.toLowerCase();
-        const user = event.args.user.toLowerCase();
-        if (walletAddress && referrer === walletAddress.toLowerCase()) {
-          directReferrals.push({
-            address: user,
-            amount: event.args.amount.toString(),
-            timestamp: (event.args.netInvestment || '').toString()
-          });
-        }
-      } catch(e) { /* skip malformed events */ }
-    });
-
-    const container = document.getElementById('directContainer');
-    container.innerHTML = '';
-    directReferrals.forEach(member => renderDirectMember(member, container));
-    updateDirectCount();
+ // --- Replace your existing loadDirectReferrals with this ---
+async function loadDirectReferrals() {
+  if (!walletAddress) {
+    throw new Error('Wallet not connected');
   }
 
-  function renderDirectMember(member, container) {
+  // 1) Use a public read-only JSON-RPC provider for reliable event queries
+  const readProvider = new ethers.providers.JsonRpcProvider("https://polygon-rpc.com");
+
+  // 2) Create a read-only contract instance using readProvider
+  const readOnlyContract = new ethers.Contract(CONTRACT_ADDR, [
+    "event UserJoined(address indexed user, address indexed referrer, uint256 amount, uint256 netInvestment)"
+  ], readProvider);
+
+  // 3) Query events (from start — can be optimized with fromBlock/toBlock)
+  // NOTE: queryFilter on mainnet may return lots of events; consider adding a block range for performance.
+  const filter = readOnlyContract.filters.UserJoined();
+  let events = [];
+  try {
+    events = await readOnlyContract.queryFilter(filter);
+  } catch (err) {
+    console.error('queryFilter failed on read provider', err);
+    // fallback: try using wallet provider if readProvider failed
+    if (provider) {
+      try {
+        const fallbackContract = new ethers.Contract(CONTRACT_ADDR, [
+          "event UserJoined(address indexed user, address indexed referrer, uint256 amount, uint256 netInvestment)"
+        ], provider);
+        events = await fallbackContract.queryFilter(filter);
+      } catch (e2) {
+        console.error('fallback queryFilter failed', e2);
+        throw new Error('Unable to fetch events from both read and wallet providers.');
+      }
+    } else {
+      throw err;
+    }
+  }
+
+  // 4) Filter events for this user's referrals
+  directReferrals = [];
+  events.forEach(event => {
+    try {
+      const referrer = event.args.referrer.toLowerCase();
+      const user = event.args.user.toLowerCase();
+      if (referrer === walletAddress.toLowerCase()) {
+        directReferrals.push({
+          address: user,
+          amount: event.args.amount.toString(),
+          timestamp: (event.args.netInvestment || '').toString()
+        });
+      }
+    } catch (e) {
+      // skip
+    }
+  });
+
+  // 5) Render
+  const container = document.getElementById('directContainer');
+  container.innerHTML = '';
+  directReferrals.forEach(member => renderDirectMember(member, container));
+  updateDirectCount();
+}
+
+ function renderDirectMember(member, container) {
     const div = document.createElement('div');
     div.className = 'direct-member';
     const short = (addr) => (addr && addr.length>10) ? addr.substring(0,6) + '...' + addr.substring(addr.length-4) : addr;
@@ -491,4 +521,5 @@
 </script>
 </body>
 </html>
+
 
