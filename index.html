@@ -10,35 +10,81 @@
   <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
 
   <style>
-    :root { --bg: #0a0e1a; --card: rgba(20, 30, 50, 0.8); --glass: rgba(255,255,255,0.05); --accent: #00d4ff; --success: #00ff88; --warning: #ffaa00; --error: #ff4757; --muted: #a0b0c0; }
+    :root {
+      --bg: #0a0e1a; --card: rgba(20, 30, 50, 0.8); --glass: rgba(255,255,255,0.05);
+      --accent: #00d4ff; --success: #00ff88; --warning: #ffaa00; --error: #ff4757; --muted: #a0b0c0;
+    }
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body { height:100%; font-family:'Inter',system-ui,sans-serif; }
-    body { background: linear-gradient(135deg, #0a0e1a 0%, #1a1f2e 50%, #0a0e1a 100%); color: #e8f0ff; padding-bottom: 20px; overflow-x: hidden; }
+    body {
+      background: linear-gradient(135deg, #0a0e1a 0%, #1a1f2e 50%, #0a0e1a 100%);
+      color: #e8f0ff; padding-bottom: 20px; overflow-x: hidden;
+    }
     .app { max-width: 420px; margin: 0 auto; padding: 16px; }
-    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; margin-bottom: 16px; backdrop-filter: blur(20px); background: rgba(10,14,26,0.8); border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
+    
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px; margin-bottom: 16px; backdrop-filter: blur(20px);
+      background: rgba(10,14,26,0.8); border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
+    }
     .brand { display: flex; align-items: center; gap: 12px; }
     .custom-logo { width: 120px; height: 48px; object-fit: contain; }
-    .status { padding: 12px; border-radius: 12px; text-align: center; font-size: 0.85rem; font-weight: 500; background: var(--glass); border: 1px solid rgba(255,255,255,0.1); margin-bottom: 16px; }
+    
+    .status {
+      padding: 12px; border-radius: 12px; text-align: center; font-size: 0.85rem; font-weight: 500;
+      background: var(--glass); border: 1px solid rgba(255,255,255,0.1); margin-bottom: 16px;
+    }
     .status.success { background: rgba(0,255,136,0.1); color: var(--success); border-color: var(--success); }
     .status.error { background: rgba(255,71,87,0.1); color: var(--error); border-color: var(--error); }
-    .card-app { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; margin-bottom: 16px; backdrop-filter: blur(20px); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
-    .btn-modern { border-radius: 16px; padding: 14px 20px; font-weight: 600; border: none; transition: all 0.3s; min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    
+    .card-app {
+      background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;
+      padding: 20px; margin-bottom: 16px; backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    
+    .btn-modern {
+      border-radius: 16px; padding: 14px 20px; font-weight: 600; border: none; transition: all 0.3s;
+      min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
     .btn-primary { background: linear-gradient(135deg, var(--accent), #00ff88); color: #000; }
     .btn-modern:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,212,255,0.4); }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
-    .btn-home { background: linear-gradient(135deg, var(--accent), #00ff88); color: #000; border-radius: 12px; padding: 8px 16px; font-size: 0.85rem; font-weight: 600; min-height: auto; min-width: 70px; white-space: nowrap; }
-    .referral-header { text-align: center; margin-bottom: 16px; font-size: 1.3rem; font-weight: 700; color: var(--accent); }
-    .count-badge { background: var(--success); color: #000; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; margin-left: 8px; }
+    
+    .btn-home {
+      background: linear-gradient(135deg, var(--accent), #00ff88); color: #000;
+      border-radius: 12px; padding: 8px 16px; font-size: 0.85rem; font-weight: 600;
+      min-height: auto; min-width: 70px; white-space: nowrap;
+    }
+    
+    .referral-header {
+      text-align: center; margin-bottom: 16px;
+      font-size: 1.3rem; font-weight: 700; color: var(--accent);
+    }
+    .count-badge {
+      background: var(--success); color: #000; padding: 4px 12px; border-radius: 20px;
+      font-size: 0.8rem; font-weight: 700; margin-left: 8px;
+    }
+    
     .search-container { position: relative; margin-bottom: 16px; }
-    .search-input { width: 100%; padding: 12px 40px 12px 16px; border-radius: 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 0.9rem; transition: all 0.3s; }
+    .search-input {
+      width: 100%; padding: 12px 40px 12px 16px; border-radius: 12px;
+      background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1);
+      color: #fff; font-size: 0.9rem; transition: all 0.3s;
+    }
     .search-input::placeholder { color: var(--muted); }
     .search-input:focus { border-color: var(--accent); outline: none; }
-    .search-icon { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--muted); }
-    .referral-list { max-height: 60vh; overflow-y: auto; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }.referral-item { display: flex; align-items: center; gap: 12px; padding: 12px; margin-bottom: 8px; background: rgba(0,212,255,0.05); border: 1px solid rgba(0,212,255,0.1); border-radius: 12px; cursor: pointer; transition: all 0.3s; word-break: break-all; }
+    .search-icon { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--muted); }.referral-list { max-height: 60vh; overflow-y: auto; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
+    .referral-item {
+      display: flex; align-items: center; gap: 12px; padding: 12px; margin-bottom: 8px;
+      background: rgba(0,212,255,0.05); border: 1px solid rgba(0,212,255,0.1); border-radius: 12px;
+      cursor: pointer; transition: all 0.3s; word-break: break-all;
+    }
     .referral-item:hover { background: rgba(0,212,255,0.15); border-color: var(--accent); transform: translateY(-2px); }
     .referral-text { flex: 1; font-size: 0.9rem; color: var(--success); font-weight: 500; }
     .copy-btn { color: var(--muted); font-size: 1.1rem; transition: all 0.3s; cursor: pointer; }
     .copy-btn:hover { color: var(--success); transform: scale(1.2); }
+    
     .no-referrals { text-align: center; padding: 40px 20px; color: var(--muted); font-style: italic; font-size: 1rem; }
     .loader { text-align: center; padding: 20px; color: var(--accent); font-size: 1rem; }
     .user-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
@@ -52,7 +98,7 @@
         <img src="prologo.png" class="custom-logo" alt="ASIAX" />
       </div>
       <button id="connectBtn" class="btn btn-modern btn-primary">
-        <i class="fas fa-wallet"></i> <span id="connectLabel">Connect Wallet</span>
+        <i class="fas fa-wallet"></i> <span id="connectLabel">1 Wallet</span>
       </button>
     </div>
 
@@ -92,6 +138,7 @@
     const CONTRACT_ADDR = '0xF6d0d72AAf0Bbf5C459E680f1e6E75E3B1ce1f06';
     const HOME_PAGE = 'axpro.html';
     const POLYGON_CHAIN_ID = "0x89";
+    const START_BLOCK = 77000000; // Contract recent hai - full history scan nahi
     let wallet, provider;
 
     document.getElementById('connectBtn').addEventListener('click', connectWallet);
@@ -106,7 +153,7 @@
         } else {
           const WalletConnectProvider = window.WalletConnectProvider.default;
           const wcProvider = new WalletConnectProvider({
-            rpc: { 137: "https://polygon-rpc.com" },
+            rpc: { 137: "https://rpc.ankr.com/polygon" }, // 🔥 FAST RPC
             chainId: 137,
             qrcode: false
           });
@@ -114,9 +161,7 @@
           web3Provider = wcProvider;
         }
 
-        const accounts = await web3Provider.request({ method: 'eth_requestAccounts' });
-        
-        try {
+        const accounts = await web3Provider.request({ method: 'eth_requestAccounts' });try {
           const chainId = await web3Provider.request({ method: 'eth_chainId' });
           if (chainId !== POLYGON_CHAIN_ID) {
             await web3Provider.request({
@@ -124,7 +169,12 @@
               params: [{ chainId: POLYGON_CHAIN_ID }]
             });
           }
-        } catch {}provider = new ethers.providers.Web3Provider(web3Provider);
+        } catch (e) {
+          document.getElementById('status').innerHTML = '❌ Polygon Chain switch failed. Switch manually!';
+          return;
+        }
+
+        provider = new ethers.providers.Web3Provider(web3Provider);
         wallet = accounts[0];
         
         document.getElementById('userAddress').innerHTML = wallet.substring(0,6) + '...' + wallet.substring(38);
@@ -143,25 +193,24 @@
       }
     }
 
-    // 🔥 FIXED: MOBILE + FAST RPC + NO FILTER!
+    // 🔥 FIXED: FAST RPC + LIMITED BLOCKS + MANUAL FILTER
     async function loadReferralsPERFECT(targetAddress) {
       try {
         document.getElementById('loader').style.display = 'block';
         document.getElementById('referralList').style.display = 'none';
         
-        // 🔥 FAST POLYGON RPC (Mobile Optimized)
-        const fastProvider = new ethers.providers.JsonRpcProvider('https://rpc-mainnet.maticvigil.com');
+        // 🔥 FAST MOBILE RPC
+        const fastProvider = new ethers.providers.JsonRpcProvider('https://rpc.ankr.com/polygon');
         const contract = new ethers.Contract(CONTRACT_ADDR, [
           "event UserJoined(address indexed user, address indexed referrer, uint256 amount, uint256 netInvestment)"
         ], fastProvider);
         
-        console.log('🔍 Scanning for:', targetAddress);
+        console.log('🔍 Scanning from block ' + START_BLOCK);
         
-        // 🔥 FIXED: NO FILTER - SCAN ALL EVENTS (100% Working!)
-        const allEvents = await contract.queryFilter('UserJoined', 0, 'latest');
+        // 🔥 LIMITED RANGE (NO TIMEOUT)
+        const allEvents = await contract.queryFilter('UserJoined', START_BLOCK, 'latest');
         console.log(`📊 Total events: ${allEvents.length}`);
         
-        // 🔥 MANUAL FILTER (Case Insensitive)
         const referralsList = allEvents
           .filter(event => event.args.referrer.toLowerCase() === targetAddress.toLowerCase())
           .map(event => event.args.user.toLowerCase());
@@ -173,30 +222,9 @@
         
       } catch(e) {
         console.error('Error:', e);
-        // 🔥 FALLBACK: Try original provider
-        setTimeout(() => loadReferralsFallback(targetAddress), 1000);
-      } finally {
+        document.getElementById('status').innerHTML = '❌ Load failed. Check console & try refresh.';
+        document.getElementById('status').className = 'status error';
         document.getElementById('loader').style.display = 'none';
-      }
-    }
-
-    // 🔥 FALLBACK METHOD
-    async function loadReferralsFallback(targetAddress) {
-      try {
-        if (!provider) return;
-        const contract = new ethers.Contract(CONTRACT_ADDR, [
-          "event UserJoined(address indexed user, address indexed referrer, uint256 amount, uint256 netInvestment)"
-        ], provider);
-        
-        const allEvents = await contract.queryFilter('UserJoined', 0, 'latest');
-        const referralsList = allEvents
-          .filter(event => event.args.referrer.toLowerCase() === targetAddress.toLowerCase())
-          .map(event => event.args.user.toLowerCase());
-        
-        const uniqueReferrals = [...new Set(referralsList)];
-        displayReferrals(uniqueReferrals, targetAddress);
-      } catch(e) {
-        console.error('Fallback failed:', e);
       }
     }
 
@@ -212,14 +240,14 @@
       if (count === 0) {
         list.innerHTML = '<div class="no-referrals">No direct referrals found 😔</div>';
       } else {
-        referralsList.forEach(userAddress => {const item = document.createElement('div');
+        referralsList.forEach(userAddress => {
+          const item = document.createElement('div');
           item.className = 'referral-item';
           item.innerHTML = `
             <span class="referral-text">${userAddress.substring(0,6)}...${userAddress.substring(38)}</span>
             <i class="fas fa-copy copy-btn" title="Copy"></i>
-         ` ;
-          item.querySelector('.copy-btn').onclick = (e) => {
-            e.stopPropagation();
+          `;
+          item.querySelector('.copy-btn').onclick = (e) => {e.stopPropagation();
             copyAddress(userAddress);
           };
           list.appendChild(item);
@@ -231,20 +259,22 @@
       document.getElementById('status').className = 'status success';
     }
 
+    // 🔥 SEARCH
     document.getElementById('searchInput').oninput = function() {
-      const query = this.value.trim();
-      if (query.length >= 6 && ethers.utils.isAddress(query)) {
+      const query = this.value.trim().toLowerCase();
+      if (query.length === 42 && ethers.utils.isAddress(query)) {
         loadReferralsPERFECT(query);
       } else if (query.length === 0 && wallet) {
         loadReferralsPERFECT(wallet);
       }
     };
 
+    // 🔥 COPY
     function copyAddress(address) {
       navigator.clipboard.writeText(address).then(() => {
         const btn = event.target;
-        btn.innerHTML = '<i class="fas fa-check"></i>';
-        setTimeout(() => btn.innerHTML = '<i class="fas fa-copy"></i>', 1000);
+        btn.innerHTML = '✅';
+        setTimeout(() => btn.innerHTML = '📋', 1000);
         alert('✅ Copied!');
       });
     }
@@ -255,3 +285,4 @@
   </script>
 </body>
 </html>
+
