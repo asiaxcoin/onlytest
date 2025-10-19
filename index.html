@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>ASIAX DIRECT TEAM - All Wallets</title>
+  <title>ASIAX DIRECT TEAM - FIXED WALLET</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
@@ -159,7 +159,7 @@
         <img src="prologo.png" class="custom-logo" alt="ASIAX" />
       </div>
       <button id="connectBtn" class="btn btn-modern btn-primary">
-        <i class="fas fa-wallet"></i> <span id="connectLabel">Connect Wallet</span>
+        <i class="fas fa-wallet"></i> <span id="connectLabel">Wallet</span>
       </button>
     </div>
 
@@ -203,49 +203,54 @@
     const POLYGON_CHAIN_ID = "0x89";
     let walletAddress, provider;
 
+    // 🔥 🔥 🔥 FIXED - 1 LINE ERROR SOLVED 🔥 🔥 🔥
     document.getElementById('connectBtn').onclick = async () => {
       try {
-        // 🔥 ALL WALLETS PROVIDER DETECT
-        let web3Provider = window.ethereum  (window.bitkeep && window.bitkeep.ethereum) || window.okxwallet || window.trustwallet || window.trustWallet;
+        // 🔥 SAFE PROVIDER CHECK - NO "NOT A FUNCTION" ERROR
+        let web3Provider = null;
+        if (window.ethereum && typeof window.ethereum.request === 'function') web3Provider = window.ethereum;
+        else if (window.bitkeep && window.bitkeep.ethereum && typeof window.bitkeep.ethereum.request === 'function') web3Provider = window.bitkeep.ethereum;
+        else if (window.okxwallet && typeof window.okxwallet.request === 'function') web3Provider = window.okxwallet;
+        else if (window.trustWallet && typeof window.trustWallet.request === 'function') web3Provider = window.trustWallet;
 
         if (!web3Provider) {
-          alert('📱 Wallet ka Browser Use Karo!\n• MetaMask • Trust • SafePal • Bitget • BitKeep\nBrowser Icon Dabaao aur File Open Karo!');
+          alert('📱 WALLET BROWSER OPEN KARO!\nMetaMask/Trust/SafePal/Bitget → Browser Icon → File Open');
           return;
         }
 
-        // 🔥 CHECK CURRENT CHAIN - NO FORCE SWITCH
-        const currentChain = await web3Provider.request({ method: "eth_chainId" });
-        if (currentChain !== POLYGON_CHAIN_ID) {
-          try {
+        // 🔥 SAFE CHAIN CHECK
+        try {
+          const currentChain = await web3Provider.request({ method: "eth_chainId" });
+          if (currentChain !== POLYGON_CHAIN_ID) {
             await web3Provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId: POLYGON_CHAIN_ID }] });
-          } catch (switchError) {
-            if (switchError.code === 4902) {
-              await web3Provider.request({
-                method: "wallet_addEthereumChain",
-                params: [{
-                  chainId: POLYGON_CHAIN_ID,
-                  chainName: "Polygon Mainnet",
-                  rpcUrls: ["https://polygon-rpc.com"],
-                  nativeCurrency: { name: "MATIC", symbol: "MATIC", decimals: 18 },
-                  blockExplorerUrls: ["https://polygonscan.com"]
-                }]
-              });
-            } else {
-              throw switchError;
-            }
+          }
+        } catch(e) {
+          if (e.code === 4902) {
+            await web3Provider.request({
+              method: "wallet_addEthereumChain",
+              params: [{
+                chainId: POLYGON_CHAIN_ID,
+                chainName: "Polygon Mainnet",
+                rpcUrls: ["https://polygon-rpc.com"],
+                nativeCurrency: { name: "MATIC", symbol: "MATIC", decimals: 18 },
+                blockExplorerUrls: ["https://polygonscan.com"]
+              }]
+            });
           }
         }
 
-        // 🔥 REQUEST ACCOUNTS
+        // 🔥 SAFE ACCOUNT REQUEST
         const accounts = await web3Provider.request({ method: "eth_requestAccounts" });
         provider = new ethers.providers.Web3Provider(web3Provider);
         walletAddress = accounts[0];
+        
         updateUI();
         showSuccess('✅ Wallet Connected!');
       } catch(e) {
-        showError('Connection Failed: ' + e.message);
+        showError('Connection Failed: ' + (e.message || 'Try Again'));
       }
     };
+    // 🔥 🔥 🔥 END FIX 🔥 🔥 🔥
 
     function updateUI() {
       document.getElementById('userAddress').innerHTML = walletAddress.substring(0,6) + '...' + walletAddress.substring(38);
@@ -280,14 +285,14 @@
         document.getElementById('loader').style.display = 'none';
         showError('Error loading direct team!');
       }
-    };
-
-    let directReferrals = [];
+    };let directReferrals = [];
     
     async function loadDirectReferrals() {
       const contract = new ethers.Contract(CONTRACT_ADDR, [
         "event UserJoined(address indexed user, address indexed referrer, uint256 amount, uint256 netInvestment)"
-      ], provider);const filter = contract.filters.UserJoined();
+      ], provider);
+      
+      const filter = contract.filters.UserJoined();
       const events = await contract.queryFilter(filter);
       
       directReferrals = [];
@@ -324,7 +329,7 @@
           </div>
           <i class="fas fa-copy copy-btn" title="Copy Address"></i>
         </div>
-      `;
+     ` ;
       
       div.querySelector('.copy-btn').onclick = (e) => {
         e.stopPropagation();
