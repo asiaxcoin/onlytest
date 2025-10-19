@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>ASIAX TEAM - Mobile UI</title>
+  <title>ASIAX DIRECT TEAM - Mobile UI</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
@@ -69,74 +69,66 @@
       scroll-behavior: smooth;
     }
     
-    /* 🔥 SIMPLE TEAM LIST STYLE */
-    .team-member {
+    /* 🔥 DIRECT TEAM STYLE - ONLY LEVEL 1 */
+    .direct-member {
       background: rgba(255,255,255,0.02); 
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 2px solid var(--success);
       border-radius: 12px; 
-      padding: 12px; 
-      margin-bottom: 8px;
+      padding: 16px; 
+      margin-bottom: 12px;
       transition: all 0.3s;
       position: relative;
       overflow: hidden;
     }
-    .team-member:hover {
-      background: rgba(0,212,255,0.15);border-color: var(--accent);
+    .direct-member:hover {
+      background: rgba(0,255,136,0.15);border-color: #00ff88;
       transform: translateX(4px);
+      box-shadow: 0 4px 20px rgba(0,255,136,0.3);
     }
     
-    /* 🔥 REFERRAL CONNECTION */
-    .referral-line {
+    .direct-line {
       position: absolute; left: 0; top: 50%; 
-      width: 4px; height: 100%; background: var(--success);
+      width: 6px; height: 100%; background: var(--success);
     }
-    .level-1 .referral-line { background: var(--success); }
-    .level-2 .referral-line { background: #ffaa00; }
-    .level-3 .referral-line { background: #ff4757; }
-    .level-4 .referral-line { background: #9c27b0; }
-    .level-5 .referral-line { background: #00d4ff; }
     
     .member-info {
-      display: flex; align-items: center; gap: 12px; padding-left: 12px;
+      display: flex; align-items: center; gap: 12px; padding-left: 16px;
     }
     
-    .level-badge {
-      width: 24px; height: 24px; border-radius: 50%;
+    .direct-badge {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--success); color: #000;
       display: flex; align-items: center; justify-content: center;
-      font-size: 0.7rem; font-weight: 700; color: #000;
+      font-size: 0.9rem; font-weight: 700;
     }
-    .level-1 .level-badge { background: var(--success); }
-    .level-2 .level-badge { background: #ffaa00; }
-    .level-3 .level-badge { background: #ff4757; }
-    .level-4 .level-badge { background: #9c27b0; }
-    .level-5 .level-badge { background: var(--accent); }
     
     .member-details {
       flex: 1;
     }
     .member-address {
-      font-size: 0.9rem; font-weight: 500; color: var(--success);
-      word-break: break-all;
+      font-size: 1rem; font-weight: 600; color: var(--success);
+      word-break: break-all; margin-bottom: 4px;
     }
-    .member-level {
-      font-size: 0.75rem; color: var(--muted); margin-top: 2px;
+    .member-status {
+      font-size: 0.8rem; color: var(--success); font-weight: 500;
     }
     
     .copy-btn {
-      color: var(--muted); cursor: pointer; font-size: 1.1rem;
-      transition: color 0.3s; padding: 4px;
+      color: var(--success); cursor: pointer; font-size: 1.2rem;
+      transition: all 0.3s; padding: 6px; background: rgba(0,255,136,0.1);
+      border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
     }
-    .copy-btn:hover { color: var(--success); transform: scale(1.2); }
+    .copy-btn:hover { 
+      background: var(--success); color: #000; 
+      transform: scale(1.1); 
+    }
     
-    .total-stats {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;
+    .total-direct {
+      background: rgba(0,255,136,0.15); border: 2px solid var(--success);
+      border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 16px;
     }
-    .stat-card {
-      background: rgba(0,255,136,0.1); border: 1px solid var(--success);
-      border-radius: 12px; padding: 12px; text-align: center;
-    }
-    .stat-number { font-size: 1.5rem; font-weight: 700; color: var(--success); }
-    .stat-label { font-size: 0.8rem; color: var(--muted); }
+    .direct-number { font-size: 2.5rem; font-weight: 700; color: var(--success); }
+    .direct-label { font-size: 1rem; color: var(--muted); }
     
     .loader {
       text-align: center; padding: 20px; color: var(--accent);
@@ -151,11 +143,11 @@
     @media (max-width: 360px) { 
       .app { padding: 12px; } 
       .card-app { padding: 16px; } 
-      .member-address { font-size: 0.85rem; }
-      .team-member { padding: 10px; }
+      .member-address { font-size: 0.9rem; }
+      .direct-member { padding: 14px; }
     }
 
-    .team-member, .btn-modern, .copy-btn {
+    .direct-member, .btn-modern, .copy-btn {
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
     }
@@ -188,32 +180,35 @@
 
     <div class="card-app">
       <div class="team-header">
-        <i class="fas fa-users" style="font-size:1.5rem;margin-right:8px"></i>
-        <strong>My Referral Team</strong>
+        <i class="fas fa-user-friends" style="font-size:1.5rem;margin-right:8px"></i>
+        <strong>My DIRECT Team</strong>
+        <div style="font-size:0.8rem;color:var(--muted)">Only Level 1 Referrals</div>
       </div>
       
-      <div id="stats" class="total-stats" style="display:none;"></div>
+      <div id="directCount" class="total-direct" style="display:none;">
+        <div class="direct-number" id="directNumber">0</div>
+        <div class="direct-label">Direct Team Members</div>
+      </div>
       
-      <button id="loadTeam" class="btn-modern btn-primary w-100" disabled><i class="fas fa-users"></i> Load My Team
+      <button id="loadDirect" class="btn-modern btn-primary w-100" disabled>
+        <i class="fas fa-user-friends"></i> Load Direct Team
       </button>
       <div id="loader" class="loader" style="display:none;">
-        <i class="fas fa-spinner fa-spin"></i> Loading team...
+        <i class="fas fa-spinner fa-spin"></i> Loading direct team...
       </div>
-      <div id="teamContainer" class="team-container" style="display:none;"></div>
+      <div id="directContainer" class="team-container" style="display:none;"></div>
     </div>
-  </div>
-
-  <script>
+  </div><script>
     const CONTRACT_ADDR = '0xF6d0d72AAf0Bbf5C459E680f1e6E75E3B1ce1f06';
     const HOME_PAGE = 'axmenu.html';
     const POLYGON_CHAIN_ID = "0x89";
-    let wallet, provider;
-    let teamMembers = [];
+    let walletAddress, provider;
 
-    // 🔥 UNIVERSAL WALLET CONNECT (SAME)
+    // 🔥 ETHER.JS v5 + UNIVERSAL WALLET CONNECT
     document.getElementById('connectBtn').onclick = async () => {
       try {
         let web3Provider = window.ethereum || window.web3 || window.okxwallet || window.bitkeep || window.trustWallet;
+        
         if (!web3Provider) {
           const walletLinks = ['metamask://', 'trust://', 'safepal://', 'bitkeep://', 'bitget://'];
           for (let link of walletLinks) {
@@ -223,13 +218,20 @@
           setTimeout(() => alert('📱 Wallet Browser mein open karo!'), 2000);
           return;
         }
+        
         await connectWallet(web3Provider);
-      } catch(e) { showError('Connection failed!'); }
+      } catch(e) { 
+        showError('Connection failed: ' + e.message); 
+      }
     };
 
     async function connectWallet(web3Provider) {
+      // 🔥 ETHER.JS v5 Polygon Switch
       try {
-        await web3Provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId: POLYGON_CHAIN_ID }] });
+        await web3Provider.request({ 
+          method: "wallet_switchEthereumChain", 
+          params: [{ chainId: POLYGON_CHAIN_ID }] 
+        });
       } catch(e) {
         if (e.code === 4902) {
           await web3Provider.request({
@@ -244,18 +246,21 @@
           });
         }
       }
+
+      // 🔥 ETHER.JS v5 Provider
       const accounts = await web3Provider.request({ method: "eth_requestAccounts" });
       provider = new ethers.providers.Web3Provider(web3Provider);
-      wallet = accounts[0];
+      walletAddress = accounts[0];
+      
       updateUI();
     }
 
     function updateUI() {
-      document.getElementById('userAddress').innerHTML = wallet.substring(0,6) + '...' + wallet.substring(38);
+      document.getElementById('userAddress').innerHTML = walletAddress.substring(0,6) + '...' + walletAddress.substring(38);
       document.getElementById('connectLabel').innerHTML = 'Connected';
       document.getElementById('connectBtn').disabled = true;
       document.getElementById('backHome').style.display = 'block';
-      document.getElementById('loadTeam').disabled = false;
+      document.getElementById('loadDirect').disabled = false;
       showSuccess('✅ Wallet Connected!');
     }
 
@@ -268,101 +273,87 @@
       document.getElementById('status').className = 'status error'; 
     }
 
-    document.getElementById('loadTeam').onclick = async () => {
+    // 🔥 ONLY LEVEL 1 DIRECT TEAM
+    document.getElementById('loadDirect').onclick = async () => {
       try {
         document.getElementById('loader').style.display = 'block';
-        document.getElementById('teamContainer').style.display = 'none';
-        showStatus('⏳ Loading Your Team...');
+        document.getElementById('directContainer').style.display = 'none';
+        showStatus('⏳ Loading Direct Team...');
         
-        await loadReferralTeam();
+        await loadDirectReferrals();
         
         document.getElementById('loader').style.display = 'none';
-        document.getElementById('teamContainer').style.display = 'block';
-        document.getElementById('stats').style.display = 'block';
-        showSuccess(`✅ Team Loaded! ${teamMembers.length} Members`);
+        document.getElementById('directContainer').style.display = 'block';
+        document.getElementById('directCount').style.display = 'block';
+        showSuccess(`✅ Direct Team Loaded! ${directReferrals.length} Members`);
       } catch(e) {
         document.getElementById('loader').style.display = 'none';
-        showError('Error loading team!');
+        showError('Error loading direct team!');
       }
     };
 
-    // 🔥 SIMPLE TEAM LOADER
-    async function loadReferralTeam() {
+    let directReferrals = [];
+    
+    async function loadDirectReferrals() {
+      // 🔥 ETHER.JS v5 Contract
       const contract = new ethers.Contract(CONTRACT_ADDR, [
         "event UserJoined(address indexed user, address indexed referrer, uint256 amount, uint256 netInvestment)"], provider);
       
-      const events = await contract.queryFilter(contract.filters.UserJoined());
-      teamMembers = [];
+      // Get all UserJoined events
+      const filter = contract.filters.UserJoined();
+      const events = await contract.queryFilter(filter);
       
-      // Build team hierarchy
-      const hierarchy = {};
+      directReferrals = [];
+      
+      // 🔥 ONLY YOUR DIRECT REFERRALS (Level 1)
       events.forEach(event => {
         const referrer = event.args.referrer.toLowerCase();
         const user = event.args.user.toLowerCase();
-        if (referrer !== '0x0000000000000000000000000000000000000000') {
-          if (!hierarchy[referrer]) hierarchy[referrer] = [];
-          hierarchy[referrer].push(user);
+        
+        if (referrer === walletAddress.toLowerCase()) {
+          directReferrals.push({
+            address: user,
+            amount: event.args.amount.toString(),
+            timestamp: event.args.netInvestment.toString()
+          });
         }
       });
       
-      // Collect all team members with levels
-      function collectTeam(addr, level = 1) {
-        if (level > 5 || teamMembers.length > 100) return;
-        if (hierarchy[addr]) {
-          hierarchy[addr].forEach(child => {
-            teamMembers.push({ address: child, level });
-            collectTeam(child, level + 1);
-          });
-        }
-      }
-      
-      collectTeam(wallet.toLowerCase());
-      
-      // Render team
-      const container = document.getElementById('teamContainer');
+      // Render direct team
+      const container = document.getElementById('directContainer');
       container.innerHTML = '';
-      updateStats();
-      teamMembers.forEach(member => renderTeamMember(member, container));
+      directReferrals.forEach(member => renderDirectMember(member, container));
+      updateDirectCount();
     }
 
-    function renderTeamMember(member, container) {
+    function renderDirectMember(member, container) {
       const div = document.createElement('div');
-      div.className = `team-member level-${member.level}`;
+      div.className = 'direct-member';
       div.innerHTML = `
-        <div class="referral-line"></div>
+        <div class="direct-line"></div>
         <div class="member-info">
-          <div class="level-badge">${member.level}</div>
+          <div class="direct-badge">👤</div>
           <div class="member-details">
             <div class="member-address">${member.address.substring(0,6)}...${member.address.substring(38)}</div>
-            <div class="member-level">Level ${member.level} Referral</div>
+            <div class="member-status">Direct Referral</div>
           </div>
-          <i class="fas fa-copy copy-btn" title="Copy"></i>
+          <i class="fas fa-copy copy-btn" title="Copy Address"></i>
         </div>
       `;
       
       div.querySelector('.copy-btn').onclick = (e) => {
         e.stopPropagation();
-        navigator.clipboard.writeText(member.address).then(() => alert('✅ Copied!'));
+        navigator.clipboard.writeText(member.address).then(() => {
+          showSuccess('✅ Address Copied!');
+          setTimeout(() => showStatus('Ready'), 2000);
+        });
       };
       
       container.appendChild(div);
     }
 
-    function updateStats() {
-      const levels = {};
-      teamMembers.forEach(m => levels[m.level] = (levels[m.level] || 0) + 1);
-      const total = teamMembers.length;
-      
-      document.getElementById('stats').innerHTML = `
-        <div class="stat-card">
-          <div class="stat-number">${total}</div>
-          <div class="stat-label">Total Team</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number">${levels[1] || 0}</div>
-          <div class="stat-label">Direct</div>
-        </div>
-     ` ;
+    function updateDirectCount() {
+      document.getElementById('directNumber').innerHTML = directReferrals.length;
     }
 
     function showStatus(msg) { 
