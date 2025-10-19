@@ -3,8 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>ASIAX DIRECT TEAM - PERFECT WALLET</title>
-
+  <title>ASIAX DIRECT TEAM - All Wallets</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
@@ -21,7 +20,7 @@
       color: #e8f0ff; padding-bottom: 20px; overflow-x: hidden;
     }
     .app { max-width: 420px; margin: 0 auto; padding: 16px; }
-
+    
     .topbar {
       display: flex; justify-content: space-between; align-items: center;
       padding: 12px 16px; margin-bottom: 16px; backdrop-filter: blur(20px);
@@ -29,21 +28,21 @@
     }
     .brand { display: flex; align-items: center; gap: 12px; }
     .custom-logo { width: 120px; height: 48px; object-fit: contain; }
-
+    
     .status {
       padding: 12px; border-radius: 12px; text-align: center; font-size: 0.85rem; font-weight: 500;
       background: var(--glass); border: 1px solid rgba(255,255,255,0.1); margin-bottom: 16px;
     }
     .status.success { background: rgba(0,255,136,0.1); color: var(--success); border-color: var(--success); }
     .status.error { background: rgba(255,71,87,0.1); color: var(--error); border-color: var(--error); }
-
+    
     .card-app {
       background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;
       padding: 20px; margin-bottom: 16px; backdrop-filter: blur(20px);
       box-shadow: 0 8px 32px rgba(0,0,0,0.3); animation: float 6s ease-in-out infinite;
     }
     @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
-
+    
     .btn-modern {
       border-radius: 16px; padding: 14px 20px; font-weight: 600; border: none; transition: all 0.3s;
       min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -51,69 +50,105 @@
     .btn-primary { background: linear-gradient(135deg, var(--accent), #00ff88); color: #000; }
     .btn-modern:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,212,255,0.4); }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
-
+    
     .btn-home {
       background: linear-gradient(135deg, var(--accent), #00ff88); color: #000;
       border-radius: 12px; padding: 8px 16px; font-size: 0.85rem; font-weight: 600;
       min-height: auto; min-width: 70px; white-space: nowrap;
     }
-
+    
     .team-header {
       text-align: center; margin-bottom: 16px;
       font-size: 1.3rem; font-weight: 700; color: var(--accent);
     }
-
+    
     .team-container {
       max-height: 65vh; overflow-y: auto;
       background: rgba(0,212,255,0.05); border-radius: 12px; padding: 12px;
-      border: 1px solid rgba(0,212,255,0.1); scroll-behavior: smooth;
+      border: 1px solid rgba(0,212,255,0.1);
+      scroll-behavior: smooth;
     }
-
+    
     .direct-member {
-      background: rgba(255,255,255,0.02);
+      background: rgba(255,255,255,0.02); 
       border: 2px solid var(--success);
-      border-radius: 12px;
-      padding: 16px;
+      border-radius: 12px; 
+      padding: 16px; 
       margin-bottom: 12px;
       transition: all 0.3s;
       position: relative;
       overflow: hidden;
     }
     .direct-member:hover {
-      background: rgba(0,255,136,0.15);
-      border-color: #00ff88; transform: translateX(4px);
+      background: rgba(0,255,136,0.15); 
+      border-color: #00ff88;transform: translateX(4px);
       box-shadow: 0 4px 20px rgba(0,255,136,0.3);
-    }.direct-line { position: absolute; left: 0; top: 50%; width: 6px; height: 100%; background: var(--success); }
-    .member-info { display: flex; align-items: center; gap: 12px; padding-left: 16px; }
-    .direct-badge { width: 28px; height: 28px; border-radius: 50%; background: var(--success); color: #000;
-      display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 700; }
-    .member-details { flex: 1; }
-    .member-address { font-size: 1rem; font-weight: 600; color: var(--success); word-break: break-all; margin-bottom: 4px; }
-    .member-status { font-size: 0.8rem; color: var(--success); font-weight: 500; }
-
+    }
+    
+    .direct-line {
+      position: absolute; left: 0; top: 50%; 
+      width: 6px; height: 100%; background: var(--success);
+    }
+    
+    .member-info {
+      display: flex; align-items: center; gap: 12px; padding-left: 16px;
+    }
+    
+    .direct-badge {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--success); color: #000;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; font-weight: 700;
+    }
+    
+    .member-details {
+      flex: 1;
+    }
+    .member-address {
+      font-size: 1rem; font-weight: 600; color: var(--success);
+      word-break: break-all; margin-bottom: 4px;
+    }
+    .member-status {
+      font-size: 0.8rem; color: var(--success); font-weight: 500;
+    }
+    
     .copy-btn {
       color: var(--success); cursor: pointer; font-size: 1.2rem;
       transition: all 0.3s; padding: 6px; background: rgba(0,255,136,0.1);
       border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
     }
-    .copy-btn:hover { background: var(--success); color: #000; transform: scale(1.1); }
-
+    .copy-btn:hover { 
+      background: var(--success); color: #000; 
+      transform: scale(1.1); 
+    }
+    
     .total-direct {
       background: rgba(0,255,136,0.15); border: 2px solid var(--success);
       border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 16px;
     }
     .direct-number { font-size: 2.5rem; font-weight: 700; color: var(--success); }
     .direct-label { font-size: 1rem; color: var(--muted); }
-
-    .loader { text-align: center; padding: 20px; color: var(--accent); font-size: 1rem; animation: pulse 1.5s infinite; }
+    
+    .loader {
+      text-align: center; padding: 20px; color: var(--accent);
+      font-size: 1rem; animation: pulse 1.5s infinite;
+    }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
-
-    .user-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    @media (max-width: 360px) {
-      .app { padding: 12px; }
-      .card-app { padding: 16px; }
+    
+    .user-info {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+    }
+    
+    @media (max-width: 360px) { 
+      .app { padding: 12px; } 
+      .card-app { padding: 16px; } 
       .member-address { font-size: 0.9rem; }
       .direct-member { padding: 14px; }
+    }
+
+    .direct-member, .btn-modern, .copy-btn {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
   </style>
 </head>
@@ -148,93 +183,44 @@
         <strong>My DIRECT Team</strong>
         <div style="font-size:0.8rem;color:var(--muted)">Only Level 1 Referrals</div>
       </div>
-
+      
       <div id="directCount" class="total-direct" style="display:none;">
         <div class="direct-number" id="directNumber">0</div>
         <div class="direct-label">Direct Team Members</div>
       </div>
-
+      
       <button id="loadDirect" class="btn-modern btn-primary w-100" disabled>
         <i class="fas fa-user-friends"></i> Load Direct Team
       </button>
-
       <div id="loader" class="loader" style="display:none;">
         <i class="fas fa-spinner fa-spin"></i> Loading direct team...
       </div>
-
       <div id="directContainer" class="team-container" style="display:none;"></div>
     </div>
-  </div>
-
-  <script>
-    /* Config & state */
+  </div><script>
     const CONTRACT_ADDR = '0xF6d0d72AAf0Bbf5C459E680f1e6E75E3B1ce1f06';
     const HOME_PAGE = 'axmenu.html';
-    const POLYGON_CHAIN_ID = "0x89"; // Polygon mainnet
-    let walletAddress = null;
-    let web3RawProvider = null;      // raw provider object (window.*)
-    let ethersProvider = null;       // ethers Web3Provider
-    let directReferrals = [];/* Helpers */
-    function shortAddr(address) {
-      if (!address) return 'Not Connected';
-      return address.slice(0,6) + '...' + address.slice(-4);
-    }
+    const POLYGON_CHAIN_ID = "0x89";
+    let walletAddress, provider;
 
-    function setStatus(msg, type = '') {
-      const el = document.getElementById('status');
-      el.innerHTML = msg;
-      el.className = type ? `status ${type}` : 'status';
-    }
-
-    function showSuccess(msg) { setStatus(msg, 'success'); }
-    function showError(msg) { setStatus('❌ ' + msg, 'error'); }
-    function showPlain(msg) { setStatus(msg); }
-
-    /* Robust provider detection */
-    function detectProvider() {
-      // Try common global provider placements
-      // Some wallets inject window.ethereum; others may put provider on wallet-specific names
-      const win = window;
-      const candidates = [
-        win.ethereum,
-        win.trustwallet,                 // some trust injections
-        win.okxwallet,                   // okx
-        win.bitkeep?.ethereum,           // bitkeep
-        win.bitget?.ethereum,            // bitget
-        win.coinbaseWalletExtension,     // coinbase extension
-        win.safepal?.provider,           // safepal
-        win.BinanceChain                 // old binance wallet
-      ];
-      for (const c of candidates) {
-        if (c && (typeof c.request === 'function' || typeof c.enable === 'function')) {
-          return c;
-        }
-      }
-      // fallback to window.ethereum even if it lacks request (rare)
-      if (win.ethereum) return win.ethereum;
-      return null;
-    }
-
-    /* Connect button handler */
     document.getElementById('connectBtn').onclick = async () => {
       try {
-        web3RawProvider = detectProvider();
-        if (!web3RawProvider) {
-          alert('📱 Wallet Browser Open Karo!\n(MetaMask • Trust • OKX • Bitget • SafePal)');
+        // 🔥 ALL WALLETS PROVIDER DETECT
+        let web3Provider = window.ethereum  (window.bitkeep && window.bitkeep.ethereum) || window.okxwallet || window.trustwallet || window.trustWallet;
+
+        if (!web3Provider) {
+          alert('📱 Wallet ka Browser Use Karo!\n• MetaMask • Trust • SafePal • Bitget • BitKeep\nBrowser Icon Dabaao aur File Open Karo!');
           return;
         }
 
-        // Wrap with ethers provider (use "any" so it does not auto-refresh on chain change)
-        ethersProvider = new ethers.providers.Web3Provider(web3RawProvider, "any");
-
-        // Try switching to Polygon chain first (many wallets support wallet_switchEthereumChain)
-        try {
-          await callProviderRequest(web3RawProvider, { method: "wallet_switchEthereumChain", params: [{ chainId: POLYGON_CHAIN_ID }] });
-        } catch (switchErr) {
-          // if unknown chain, try to add it
-          if (switchErr && (switchErr.code === 4902 || (switchErr.data && switchErr.data.originalError && switchErr.data.originalError.code === 4902))) {
-            try {
-              await callProviderRequest(web3RawProvider, {
+        // 🔥 CHECK CURRENT CHAIN - NO FORCE SWITCH
+        const currentChain = await web3Provider.request({ method: "eth_chainId" });
+        if (currentChain !== POLYGON_CHAIN_ID) {
+          try {
+            await web3Provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId: POLYGON_CHAIN_ID }] });
+          } catch (switchError) {
+            if (switchError.code === 4902) {
+              await web3Provider.request({
                 method: "wallet_addEthereumChain",
                 params: [{
                   chainId: POLYGON_CHAIN_ID,
@@ -244,174 +230,81 @@
                   blockExplorerUrls: ["https://polygonscan.com"]
                 }]
               });
-            } catch (addErr) {
-              // if adding fails, ignore and continue to request accounts (some wallets won't allow add)
-              console.warn("Add chain failed:", addErr);
+            } else {
+              throw switchError;
             }
-          } else {
-            // some wallets will throw on switch; ignore and continue
-            console.warn("Switch chain error (non-fatal):", switchErr);
           }
         }
 
-        // Request accounts
-        const accounts = await requestAccounts(web3RawProvider);
-        if (!accounts || accounts.length === 0) throw new Error('No accounts returned');
-
+        // 🔥 REQUEST ACCOUNTS
+        const accounts = await web3Provider.request({ method: "eth_requestAccounts" });
+        provider = new ethers.providers.Web3Provider(web3Provider);
         walletAddress = accounts[0];
-        // set ethersProvider again to ensure signer support
-        ethersProvider = new ethers.providers.Web3Provider(web3RawProvider, "any");
-
-        // subscribe to account & chain changes
-        subscribeProviderEvents(web3RawProvider);
-
-        updateUIConnected();
+        updateUI();
         showSuccess('✅ Wallet Connected!');
-      } catch (err) {
-        console.error('Connect error:', err);
-        showError('Connection failed! ' + (err && err.message ? err.message : ''));
+      } catch(e) {
+        showError('Connection Failed: ' + e.message);
       }
-    };/* Utility: call provider.request or provider.enable */
-    async function callProviderRequest(p, payload) {
-      if (!p) throw new Error('Provider not found');
-      if (typeof p.request === 'function') {
-        return await p.request(payload);
-      }
-      if (typeof p.send === 'function') {
-        // older providers
-        return await p.send(payload.method, payload.params || []);
-      }
-      if (typeof p.enable === 'function') {
-        // legacy
-        return await p.enable();
-      }
-      throw new Error('Provider does not support request/send/enable');
-    }
+    };
 
-    async function requestAccounts(p) {
-      // standard
-      try {
-        return await callProviderRequest(p, { method: 'eth_requestAccounts' });
-      } catch (e) {
-        // fallback to enable
-        if (typeof p.enable === 'function') {
-          return await p.enable();
-        }
-        throw e;
-      }
-    }
-
-    /* Subscribe to provider events (accountsChanged, chainChanged) */
-    function subscribeProviderEvents(p) {
-      try {
-        if (!p.on) return;
-        // avoid multiple subscriptions by removing first
-        try { p.removeListener && p.removeListener('accountsChanged', handleAccountsChanged); } catch {}
-        try { p.removeListener && p.removeListener('chainChanged', handleChainChanged); } catch {}
-
-        p.on('accountsChanged', handleAccountsChanged);
-        p.on('chainChanged', handleChainChanged);
-      } catch (e) {
-        console.warn('subscribe events failed', e);
-      }
-    }
-
-    function handleAccountsChanged(accounts) {
-      if (!accounts || accounts.length === 0) {
-        // disconnected
-        walletAddress = null;
-        resetUI();
-        showPlain('Wallet disconnected');
-      } else {
-        walletAddress = accounts[0];
-        updateUIConnected();
-        showPlain('Account changed: ' + shortAddr(walletAddress));
-      }
-    }
-
-    function handleChainChanged(chainId) {
-      // reload UI or just show status
-      showPlain('Chain changed: ' + chainId);
-      // re-create ethers provider on chain change
-      try {
-        ethersProvider = new ethers.providers.Web3Provider(web3RawProvider, "any");
-      } catch(e) { console.warn(e); }
-    }
-
-    /* UI updates */
-    function updateUIConnected() {
-      document.getElementById('userAddress').innerText = shortAddr(walletAddress);
-      document.getElementById('connectLabel').innerText = 'Connected';
+    function updateUI() {
+      document.getElementById('userAddress').innerHTML = walletAddress.substring(0,6) + '...' + walletAddress.substring(38);
+      document.getElementById('connectLabel').innerHTML = 'Connected';
       document.getElementById('connectBtn').disabled = true;
       document.getElementById('backHome').style.display = 'block';
       document.getElementById('loadDirect').disabled = false;
     }
 
-    function resetUI() {
-      document.getElementById('userAddress').innerText = 'Not Connected';
-      document.getElementById('connectLabel').innerText = 'Connect Wallet';
-      document.getElementById('connectBtn').disabled = false;
-      document.getElementById('backHome').style.display = 'none';
-      document.getElementById('loadDirect').disabled = true;
-      document.getElementById('directContainer').style.display = 'none';
-      document.getElementById('directCount').style.display = 'none';
-      directReferrals = [];
-      updateDirectCount();
+    function showSuccess(msg) { 
+      document.getElementById('status').innerHTML = msg; 
+      document.getElementById('status').className = 'status success'; 
+    }
+    function showError(msg) { 
+      document.getElementById('status').innerHTML = '❌ ' + msg; 
+      document.getElementById('status').className = 'status error'; 
     }
 
-    /* Load Direct Team (events) */
     document.getElementById('loadDirect').onclick = async () => {
       try {
-        if (!ethersProvider) throw new Error('Please connect wallet first');
         document.getElementById('loader').style.display = 'block';
         document.getElementById('directContainer').style.display = 'none';
-        showPlain('⏳ Loading Direct Team...');
-
+        showStatus('⏳ Loading Direct Team...');
+        
         await loadDirectReferrals();
-
+        
         document.getElementById('loader').style.display = 'none';
         document.getElementById('directContainer').style.display = 'block';
-        document.getElementById('directCount').style.display = 'block';showSuccess(`✅ Direct Team Loaded! ${directReferrals.length} Members`);
-      } catch (e) {
-        console.error('Load direct error:', e);
+        document.getElementById('directCount').style.display = 'block';
+        showSuccess(`✅ Direct Team Loaded! ${directReferrals.length} Members`);
+      } catch(e) {
         document.getElementById('loader').style.display = 'none';
-        showError('Error loading direct team: ' + (e.message || ''));
+        showError('Error loading direct team!');
       }
     };
 
+    let directReferrals = [];
+    
     async function loadDirectReferrals() {
-      // Use provider (read-only). If you want signer for contract calls, use ethersProvider.getSigner()
-      const provider = ethersProvider;
-      // ABI only needs the event signature
-      const abi = [
+      const contract = new ethers.Contract(CONTRACT_ADDR, [
         "event UserJoined(address indexed user, address indexed referrer, uint256 amount, uint256 netInvestment)"
-      ];
-      const contract = new ethers.Contract(CONTRACT_ADDR, abi, provider);
-
-      // Query all events (be careful: on mainnet this can be heavy)
-      const filter = contract.filters.UserJoined();
+      ], provider);const filter = contract.filters.UserJoined();
       const events = await contract.queryFilter(filter);
-
+      
       directReferrals = [];
-      const myAddr = walletAddress ? walletAddress.toLowerCase() : '';
-
-      events.forEach(ev => {
-        try {
-          const referrer = ev.args.referrer.toLowerCase();
-          const user = ev.args.user.toLowerCase();
-          if (referrer === myAddr) {
-            directReferrals.push({
-              address: user,
-              amount: ev.args.amount.toString(),
-              timestamp: (ev.args.netInvestment || '').toString()
-            });
-          }
-        } catch (err) {
-          console.warn('Event parse error', err);
+      
+      events.forEach(event => {
+        const referrer = event.args.referrer.toLowerCase();
+        const user = event.args.user.toLowerCase();
+        
+        if (referrer === walletAddress.toLowerCase()) {
+          directReferrals.push({
+            address: user,
+            amount: event.args.amount.toString(),
+            timestamp: event.args.netInvestment.toString()
+          });
         }
       });
-
-      // render
+      
       const container = document.getElementById('directContainer');
       container.innerHTML = '';
       directReferrals.forEach(member => renderDirectMember(member, container));
@@ -426,53 +319,36 @@
         <div class="member-info">
           <div class="direct-badge">👤</div>
           <div class="member-details">
-            <div class="member-address">${shortAddr(member.address)}</div>
+            <div class="member-address">${member.address.substring(0,6)}...${member.address.substring(38)}</div>
             <div class="member-status">Direct Referral</div>
           </div>
           <i class="fas fa-copy copy-btn" title="Copy Address"></i>
         </div>
-     ` ;
-      const copyBtn = div.querySelector('.copy-btn');
-      copyBtn.onclick = (e) => {
+      `;
+      
+      div.querySelector('.copy-btn').onclick = (e) => {
         e.stopPropagation();
         navigator.clipboard.writeText(member.address).then(() => {
           showSuccess('✅ Address Copied!');
-          setTimeout(() => showPlain('Ready — Connect Wallet'), 1500);
-        }).catch(err => {
-          showError('Copy failed');
+          setTimeout(() => showStatus('Ready'), 2000);
         });
       };
+      
       container.appendChild(div);
     }
 
     function updateDirectCount() {
-      document.getElementById('directNumber').innerText = directReferrals.length;
+      document.getElementById('directNumber').innerHTML = directReferrals.length;
+    }
+
+    function showStatus(msg) { 
+      document.getElementById('status').innerHTML = msg; 
+      document.getElementById('status').className = 'status'; 
     }
 
     document.getElementById('backHome').onclick = () => {
       window.location.href = HOME_PAGE;
     };
-
-    // Reset UI on page load
-    (function init() {
-      resetUI();
-      // If provider already present (e.g. injected), show quick connect state
-      const p = detectProvider();
-      if (p && p.selectedAddress) {
-        // provider already connected maybe
-        web3RawProvider = p;
-        ethersProvider = new ethers.providers.Web3Provider(web3RawProvider, "any");
-        try { subscribeProviderEvents(web3RawProvider); } catch {}
-        // fetch accounts (non-blocking)
-        requestAccounts(web3RawProvider).then(accs => {
-          if (accs && accs.length) {
-            walletAddress = accs[0];
-            updateUIConnected();
-            showPlain('Wallet detected: ' + shortAddr(walletAddress));
-          }
-        }).catch(()=>{});
-      }
-    })();
   </script>
 </body>
 </html>
