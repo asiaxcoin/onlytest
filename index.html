@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>ASIAX TREE - Mobile UI</title>
+  <title>ASIAX TEAM - Mobile UI</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
@@ -57,93 +57,86 @@
       min-height: auto; min-width: 70px; white-space: nowrap;
     }
     
-    .tree-header {
+    .team-header {
       text-align: center; margin-bottom: 16px;
       font-size: 1.3rem; font-weight: 700; color: var(--accent);
     }
     
-    .tree-container {
+    .team-container {
       max-height: 65vh; overflow-y: auto;
       background: rgba(0,212,255,0.05); border-radius: 12px; padding: 12px;
       border: 1px solid rgba(0,212,255,0.1);
       scroll-behavior: smooth;
     }
     
-    /* 🔥 PERFECT TREE VIEWING - FIXED! */
-    .tree-node {
+    /* 🔥 SIMPLE TEAM LIST STYLE */
+    .team-member {
       background: rgba(255,255,255,0.02); 
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 12px; 
       padding: 12px; 
-      margin-bottom: 8px; /* TIGHT SPACING */
-      cursor: pointer; 
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      width: 100%;
-      user-select: none;}.tree-node:hover {
-      background: rgba(0,212,255,0.15); 
-      border-color: var(--accent);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0,212,255,0.2);
+      margin-bottom: 8px;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
     }
-    .tree-node.expanded { 
-      border-color: var(--accent); 
-      background: rgba(0,212,255,0.08);
+    .team-member:hover {
+      background: rgba(0,212,255,0.15);border-color: var(--accent);
+      transform: translateX(4px);
     }
     
-    .tree-address {
-      font-size: 0.9rem; 
-      color: var(--success);
-      display: flex; 
-      align-items: center; 
-      justify-content: space-between;
-      gap: 12px;
-      padding-right: 8px;
+    /* 🔥 REFERRAL CONNECTION */
+    .referral-line {
+      position: absolute; left: 0; top: 50%; 
+      width: 4px; height: 100%; background: var(--success);
     }
-    .address-text {
-      flex: 1; 
-      font-weight: 500;
+    .level-1 .referral-line { background: var(--success); }
+    .level-2 .referral-line { background: #ffaa00; }
+    .level-3 .referral-line { background: #ff4757; }
+    .level-4 .referral-line { background: #9c27b0; }
+    .level-5 .referral-line { background: #00d4ff; }
+    
+    .member-info {
+      display: flex; align-items: center; gap: 12px; padding-left: 12px;
+    }
+    
+    .level-badge {
+      width: 24px; height: 24px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 700; color: #000;
+    }
+    .level-1 .level-badge { background: var(--success); }
+    .level-2 .level-badge { background: #ffaa00; }
+    .level-3 .level-badge { background: #ff4757; }
+    .level-4 .level-badge { background: #9c27b0; }
+    .level-5 .level-badge { background: var(--accent); }
+    
+    .member-details {
+      flex: 1;
+    }
+    .member-address {
+      font-size: 0.9rem; font-weight: 500; color: var(--success);
       word-break: break-all;
     }
-    
-    /* 🔥 PERFECT COLLAPSE/EXPAND ANIMATION */
-    .tree-children {
-      margin-left: 24px; /* CLEAR INDENT */
-      margin-top: 8px; 
-      overflow: hidden; 
-      max-height: 0;
-      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s;
-      border-left: 2px solid rgba(0,212,255,0.3); 
-      padding-left: 12px;
-    }
-    .tree-node.expanded .tree-children { 
-      max-height: 2000px; 
-      margin-top: 12px; 
-    }
-    
-    .tree-toggle { 
-      font-size: 1.2rem; 
-      color: var(--accent); 
-      min-width: 24px;
-      text-align: center;
-      transition: all 0.3s;
-    }
-    .tree-node.expanded .tree-toggle { 
-      transform: rotate(45deg); 
-      color: var(--success);
+    .member-level {
+      font-size: 0.75rem; color: var(--muted); margin-top: 2px;
     }
     
     .copy-btn {
-      color: var(--muted); 
-      cursor: pointer;
-      margin-left: 8px;
-      transition: color 0.3s;
+      color: var(--muted); cursor: pointer; font-size: 1.1rem;
+      transition: color 0.3s; padding: 4px;
     }
-    .copy-btn:hover { color: var(--success); }
+    .copy-btn:hover { color: var(--success); transform: scale(1.2); }
     
-    .no-referrals {
-      color: var(--muted); padding: 16px; text-align: center; font-style: italic;
-      font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 8px;
+    .total-stats {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;
     }
+    .stat-card {
+      background: rgba(0,255,136,0.1); border: 1px solid var(--success);
+      border-radius: 12px; padding: 12px; text-align: center;
+    }
+    .stat-number { font-size: 1.5rem; font-weight: 700; color: var(--success); }
+    .stat-label { font-size: 0.8rem; color: var(--muted); }
     
     .loader {
       text-align: center; padding: 20px; color: var(--accent);
@@ -158,12 +151,11 @@
     @media (max-width: 360px) { 
       .app { padding: 12px; } 
       .card-app { padding: 16px; } 
-      .tree-address { font-size: 0.85rem; }
-      .tree-node { padding: 10px; margin-bottom: 6px; }
+      .member-address { font-size: 0.85rem; }
+      .team-member { padding: 10px; }
     }
 
-    /* 🔥 MOBILE WALLET TOUCH FIX */
-    .tree-node, .btn-modern, .copy-btn {
+    .team-member, .btn-modern, .copy-btn {
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
     }
@@ -185,7 +177,7 @@
     <div class="card-app">
       <div class="user-info">
         <div>
-          <div style="color: var(--muted); font-size: 0.8rem;">Address</div>
+          <div style="color: var(--muted); font-size: 0.8rem;">Your Address</div>
           <div id="userAddress" style="font-weight:700;font-size:1.1rem">Not Connected</div>
         </div>
         <button id="backHome" class="btn-home" style="display:none;">
@@ -195,17 +187,19 @@
     </div>
 
     <div class="card-app">
-      <div class="tree-header">
-        <i class="fas fa-sitemap" style="font-size:1.5rem;margin-right:8px"></i>
-        My Referral Tree
+      <div class="team-header">
+        <i class="fas fa-users" style="font-size:1.5rem;margin-right:8px"></i>
+        <strong>My Referral Team</strong>
       </div>
-      <button id="loadTree" class="btn-modern btn-primary w-100" disabled>
-        <i class="fas fa-tree"></i> Load Tree
+      
+      <div id="stats" class="total-stats" style="display:none;"></div>
+      
+      <button id="loadTeam" class="btn-modern btn-primary w-100" disabled><i class="fas fa-users"></i> Load My Team
       </button>
       <div id="loader" class="loader" style="display:none;">
-        <i class="fas fa-spinner fa-spin"></i> Loading tree data...
+        <i class="fas fa-spinner fa-spin"></i> Loading team...
       </div>
-      <div id="treeContainer" class="tree-container" style="display:none;"></div>
+      <div id="teamContainer" class="team-container" style="display:none;"></div>
     </div>
   </div>
 
@@ -214,51 +208,26 @@
     const HOME_PAGE = 'axmenu.html';
     const POLYGON_CHAIN_ID = "0x89";
     let wallet, provider;
-    let referrals = {};// 🔥 UNIVERSAL MOBILE WALLET CONNECTOR
+    let teamMembers = [];
+
+    // 🔥 UNIVERSAL WALLET CONNECT (SAME)
     document.getElementById('connectBtn').onclick = async () => {
       try {
-        // Check for ANY wallet provider
         let web3Provider = window.ethereum || window.web3 || window.okxwallet || window.bitkeep || window.trustWallet;
-        
         if (!web3Provider) {
-          // 🔥 MOBILE WALLET DEEP LINK - ALL WALLETS SUPPORT
-          const walletLinks = [
-            'metamask://', // MetaMask Mobile
-            'trust://',     // Trust Wallet
-            'safepal://',   // SafePal
-            'bitkeep://',   // BitKeep
-            'bitget://',    // Bitget Wallet
-            'https://metamask.app.link/dapp/' + encodeURIComponent(window.location.href), // MetaMask Fallback
-            'https://link.trustwallet.com/add_browser_dapp/' + encodeURIComponent(window.location.href) // Trust Fallback
-          ];
-          
-          // Try deep links first
-          let opened = false;
-          for (let link of walletLinks.slice(0,5)) {
+          const walletLinks = ['metamask://', 'trust://', 'safepal://', 'bitkeep://', 'bitget://'];
+          for (let link of walletLinks) {
             window.location.href = link;
             await new Promise(resolve => setTimeout(resolve, 1000));
-            if (document.hidden || opened) break;
           }
-          
-          // Fallback alert for manual open
-          setTimeout(() => {
-            if (!web3Provider) {
-              alert('📱 Wallet Browser mein open karo:\n• MetaMask\n• Trust Wallet\n• SafePal\n• Bitget\n\nBrowser icon dabaao! 👆');
-            }
-          }, 2000);
+          setTimeout(() => alert('📱 Wallet Browser mein open karo!'), 2000);
           return;
         }
-
-        // 🔥 STANDARD WALLET CONNECTION
         await connectWallet(web3Provider);
-        
-      } catch(e) {
-        showError('Connection failed: ' + e.message);
-      }
+      } catch(e) { showError('Connection failed!'); }
     };
 
     async function connectWallet(web3Provider) {
-      // Switch to Polygon
       try {
         await web3Provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId: POLYGON_CHAIN_ID }] });
       } catch(e) {
@@ -275,12 +244,9 @@
           });
         }
       }
-
-      // Request accounts
       const accounts = await web3Provider.request({ method: "eth_requestAccounts" });
       provider = new ethers.providers.Web3Provider(web3Provider);
       wallet = accounts[0];
-      
       updateUI();
     }
 
@@ -289,154 +255,124 @@
       document.getElementById('connectLabel').innerHTML = 'Connected';
       document.getElementById('connectBtn').disabled = true;
       document.getElementById('backHome').style.display = 'block';
-      document.getElementById('loadTree').disabled = false;
+      document.getElementById('loadTeam').disabled = false;
       showSuccess('✅ Wallet Connected!');
     }
 
-    function showSuccess(msg) {
-      document.getElementById('status').innerHTML = msg;
-      document.getElementById('status').className = 'status success';
+    function showSuccess(msg) { 
+      document.getElementById('status').innerHTML = msg; 
+      document.getElementById('status').className = 'status success'; 
+    }
+    function showError(msg) { 
+      document.getElementById('status').innerHTML = '❌ ' + msg; 
+      document.getElementById('status').className = 'status error'; 
     }
 
-    function showError(msg) {
-      document.getElementById('status').innerHTML = '❌ ' + msg;
-      document.getElementById('status').className = 'status error';
-    }
-
-    document.getElementById('loadTree').onclick = async () => {
+    document.getElementById('loadTeam').onclick = async () => {
       try {
         document.getElementById('loader').style.display = 'block';
-        document.getElementById('treeContainer').style.display = 'none';
-        showStatus('⏳ Loading Tree...');
+        document.getElementById('teamContainer').style.display = 'none';
+        showStatus('⏳ Loading Your Team...');
         
-        await loadReferralTree();
+        await loadReferralTeam();
         
         document.getElementById('loader').style.display = 'none';
-        document.getElementById('treeContainer').style.display = 'block';
-        showSuccess(`✅ Tree Loaded! ${getTotalMembers()} Members`);
+        document.getElementById('teamContainer').style.display = 'block';
+        document.getElementById('stats').style.display = 'block';
+        showSuccess(`✅ Team Loaded! ${teamMembers.length} Members`);
       } catch(e) {
         document.getElementById('loader').style.display = 'none';
-        showError('Error loading tree!');
-        console.error(e);
+        showError('Error loading team!');
       }
-    };function showStatus(msg) {
-      document.getElementById('status').innerHTML = msg;
-      document.getElementById('status').className = 'status';
-    }
+    };
 
-    async function loadReferralTree() {
+    // 🔥 SIMPLE TEAM LOADER
+    async function loadReferralTeam() {
       const contract = new ethers.Contract(CONTRACT_ADDR, [
-        "event UserJoined(address indexed user, address indexed referrer, uint256 amount, uint256 netInvestment)"
-      ], provider);
+        "event UserJoined(address indexed user, address indexed referrer, uint256 amount, uint256 netInvestment)"], provider);
       
-      const latestBlock = await provider.getBlockNumber();
-      const fromBlock = Math.max(0, latestBlock - 10000);
+      const events = await contract.queryFilter(contract.filters.UserJoined());
+      teamMembers = [];
       
-      const filter = contract.filters.UserJoined();
-      filter.fromBlock = fromBlock;
-      filter.toBlock = 'latest';
-      
-      const events = await contract.queryFilter(filter);
-      
-      referrals = {};
-      
+      // Build team hierarchy
+      const hierarchy = {};
       events.forEach(event => {
         const referrer = event.args.referrer.toLowerCase();
         const user = event.args.user.toLowerCase();
-        
         if (referrer !== '0x0000000000000000000000000000000000000000') {
-          if (!referrals[referrer]) referrals[referrer] = [];
-          if (!referrals[referrer].includes(user)) {
-            referrals[referrer].push(user);
-          }
+          if (!hierarchy[referrer]) hierarchy[referrer] = [];
+          hierarchy[referrer].push(user);
         }
       });
       
-      const treeContainer = document.getElementById('treeContainer');
-      treeContainer.innerHTML = '';
-      buildTreeNode(wallet.toLowerCase(), treeContainer, 0);
+      // Collect all team members with levels
+      function collectTeam(addr, level = 1) {
+        if (level > 5 || teamMembers.length > 100) return;
+        if (hierarchy[addr]) {
+          hierarchy[addr].forEach(child => {
+            teamMembers.push({ address: child, level });
+            collectTeam(child, level + 1);
+          });
+        }
+      }
+      
+      collectTeam(wallet.toLowerCase());
+      
+      // Render team
+      const container = document.getElementById('teamContainer');
+      container.innerHTML = '';
+      updateStats();
+      teamMembers.forEach(member => renderTeamMember(member, container));
     }
 
-    function buildTreeNode(address, parentElement, level) {
-      if (level > 5) return;
-      
-      const node = document.createElement('div');
-      node.className = 'tree-node';
-      const count = referrals[address] ? referrals[address].length : 0;
-      
-      node.innerHTML = `
-        <div class="tree-address">
-          <span class="address-text">${address.substring(0,6)}...${address.substring(38)}</span>
-          <i class="fas fa-copy copy-btn" title="Copy Address"></i>
-          <span class="tree-toggle">${count > 0 ? '+' : ''}</span>
+    function renderTeamMember(member, container) {
+      const div = document.createElement('div');
+      div.className = `team-member level-${member.level}`;
+      div.innerHTML = `
+        <div class="referral-line"></div>
+        <div class="member-info">
+          <div class="level-badge">${member.level}</div>
+          <div class="member-details">
+            <div class="member-address">${member.address.substring(0,6)}...${member.address.substring(38)}</div>
+            <div class="member-level">Level ${member.level} Referral</div>
+          </div>
+          <i class="fas fa-copy copy-btn" title="Copy"></i>
         </div>
-        <div class="tree-children"></div>
       `;
       
-      const addressDiv = node.querySelector('.tree-address');
-      const copyBtn = node.querySelector('.copy-btn');
-      
-      // 🔥 PERFECT TOUCH + CLICK - ALL WALLETS
-      const toggleNode = (e) => {
-        e.preventDefault();
+      div.querySelector('.copy-btn').onclick = (e) => {
         e.stopPropagation();
-        const nodeEl = addressDiv.closest('.tree-node');
-        const children = nodeEl.querySelector('.tree-children');
-        const toggle = addressDiv.querySelector('.tree-toggle');
-        
-        if (!nodeEl.classList.contains('expanded')) {
-          nodeEl.classList.add('expanded');
-          children.style.maxHeight = '2000px';
-          toggle.innerHTML = count > 0 ? '−' : '';
-          
-          if (children.innerHTML.trim() === '' && count > 0) {
-            const childrenList = referrals[address] || [];
-            childrenList.forEach(child => buildTreeNode(child, children, level + 1));
-          }
-        } else {
-          nodeEl.classList.remove('expanded');
-          children.style.maxHeight = '0';
-          toggle.innerHTML = count > 0 ? '+' : '';
-        }
+        navigator.clipboard.writeText(member.address).then(() => alert('✅ Copied!'));
       };
       
-      addressDiv.onclick = toggleNode;
-      addressDiv.ontouchend = toggleNode;
-      
-      copyBtn.onclick = (e) => {
-        e.stopPropagation();
-        navigator.clipboard.writeText(address).then(() => {
-          alert('✅ Address Copied!');
-        });
-      };
-      
-      parentElement.appendChild(node);
+      container.appendChild(div);
     }
 
-    function getTotalMembers() {
-      let total = 0;
-      function countChildren(addr, level) {
-        if (level > 5) return;
-        const children = referrals[addr] || [];
-        total += children.length;
-        children.forEach(child => countChildren(child, level + 1));
-      }
-      countChildren(wallet.toLowerCase(), 0);
-      return total;
+    function updateStats() {
+      const levels = {};
+      teamMembers.forEach(m => levels[m.level] = (levels[m.level] || 0) + 1);
+      const total = teamMembers.length;
+      
+      document.getElementById('stats').innerHTML = `
+        <div class="stat-card">
+          <div class="stat-number">${total}</div>
+          <div class="stat-label">Total Team</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">${levels[1] || 0}</div>
+          <div class="stat-label">Direct</div>
+        </div>
+     ` ;
+    }
+
+    function showStatus(msg) { 
+      document.getElementById('status').innerHTML = msg; 
+      document.getElementById('status').className = 'status'; 
     }
 
     document.getElementById('backHome').onclick = () => {
       window.location.href = HOME_PAGE;
-    };// 🔥 AUTO-CONNECT IF ALREADY CONNECTED
-    if (window.ethereum) {
-      window.ethereum.on('accountsChanged', (accounts) => {
-        if (accounts.length === 0) {
-          location.reload();
-        } else {
-          connectWallet(window.ethereum);
-        }
-      });
-    }
+    };
   </script>
 </body>
 </html>
