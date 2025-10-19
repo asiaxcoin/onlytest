@@ -3,11 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>ASIAX REFERRALS - All Wallets Supported</title>
+  <title>ASIAX REFERRALS - Ethers V5 All Wallets Fixed</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <!-- 🔥 ETHER.JS V5 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
-  <!-- 🔥 WALLET CONNECT SUPPORT -->
+  <!-- 🔥 WALLET CONNECT V1.8 (V5 Perfect) -->
   <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
 
   <style>
@@ -73,8 +74,8 @@
       background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1);
       color: #fff; font-size: 0.9rem; transition: all 0.3s;
     }
-    .search-input::placeholder { color: var(--muted); }
-    .search-input:focus { border-color: var(--accent); outline: none; }.search-icon { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+    .search-input::placeholder { color: var(--muted); }.search-input:focus { border-color: var(--accent); outline: none; }
+    .search-icon { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--muted); }
     .referral-list { max-height: 60vh; overflow-y: auto; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
     .referral-item {
       display: flex; align-items: center; gap: 12px; padding: 12px; margin-bottom: 8px;
@@ -89,8 +90,6 @@
     .no-referrals { text-align: center; padding: 40px 20px; color: var(--muted); font-style: italic; font-size: 1rem; }
     .loader { text-align: center; padding: 20px; color: var(--accent); font-size: 1rem; }
     .user-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    
-    /* 🔥 WALLET CONNECT MODAL FIX */
     .wc-modal { z-index: 9999 !important; }
   </style>
 </head>
@@ -101,7 +100,7 @@
         <img src="prologo.png" class="custom-logo" alt="ASIAX" />
       </div>
       <button id="connectBtn" class="btn btn-modern btn-primary">
-        <i class="fas fa-wallet"></i> <span id="connectLabel">loading data</span>
+        <i class="fas fa-wallet"></i> <span id="connectLabel">Connect Wallet</span>
       </button>
     </div>
 
@@ -143,7 +142,7 @@
     const POLYGON_CHAIN_ID = "0x89";
     let wallet, provider;
 
-    // 🔥 UNIVERSAL WALLET CONNECT - ALL 15+ WALLETS!
+    // 🔥 FIXED: ETHER.JS V5 + ALL WALLETS (MOBILE DEEP LINKS)
     document.getElementById('connectBtn').addEventListener('click', connectWallet);
     document.getElementById('connectBtn').addEventListener('touchstart', connectWallet);
 
@@ -151,55 +150,67 @@
       try {
         document.getElementById('status').innerHTML = '🔗 Detecting Wallet...';
         
-        // 🔥 STEP 1: UNIVERSAL WALLET DETECTION
         let web3Provider;
+        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        
         if (window.ethereum) {
-          // MetaMask, Coinbase, Rabby, Brave, Phantom, OKX, etc
-          web3Provider = window.ethereum;
-          document.getElementById('status').innerHTML = '🔗 Opening MetaMask/Coinbase...';} else if (window.web3) {
-          // Legacy Web3
-          web3Provider = window.web3.currentProvider;
-          document.getElementById('status').innerHTML = '🔗 Opening Legacy Wallet...';
+          // 🔥 BROWSER/EXTENSION (MetaMask, Coinbase, OKX, SafePal Extension)
+          web3Provider = window.ethereum;document.getElementById('status').innerHTML = '🔗 Opening Browser Wallet...';
         } else {
-          // 🔥 STEP 2: WALLET CONNECT (Trust, Binance, PhonePe, ANY!)
-          document.getElementById('status').innerHTML = '📱 Opening QR Code...';
+          // 🔥 WALLET CONNECT (Mobile/QR) - FIXED MOBILE LINKS
+          document.getElementById('status').innerHTML = '📱 Opening Mobile Wallet...';
           const WalletConnectProvider = window.WalletConnectProvider.default;
           const wcProvider = new WalletConnectProvider({
             rpc: { 137: "https://polygon-rpc.com" },
-            qrcode: true,
-            chainId: 137
+            chainId: 137,
+            qrcode: !isMobile,  // 🔥 MOBILE: Deep Link | DESKTOP: QR
+            qrcodeModalOptions: {
+              mobileLinks: [
+                "metamask",    // MetaMask
+                "trust",       // Trust Wallet
+                "safepal",     // SafePal
+                "coinbasewallet", // Coinbase
+                "binance",     // Binance
+                "okx",         // OKX
+                "rainbow",     // Rainbow
+                "argent",      // Argent
+                "imtoken",     // imToken
+                "pillar"       // Pillar
+              ]
+            }
           });
           await wcProvider.enable();
           web3Provider = wcProvider;
         }
 
-        // 🔥 STEP 3: REQUEST ACCOUNTS
+        // 🔥 REQUEST ACCOUNTS
         const accounts = await web3Provider.request({ method: 'eth_requestAccounts' });
         
-        // 🔥 STEP 4: POLYGON SWITCH (ALL WALLETS)
-        try {
-          const chainId = await web3Provider.request({ method: 'eth_chainId' });
-          if (chainId !== POLYGON_CHAIN_ID) {
+        // 🔥 POLYGON SWITCH/ADD
+        const chainId = await web3Provider.request({ method: 'eth_chainId' });
+        if (chainId !== POLYGON_CHAIN_ID) {
+          try {
             await web3Provider.request({
               method: 'wallet_switchEthereumChain',
               params: [{ chainId: POLYGON_CHAIN_ID }]
             });
+          } catch (switchError) {
+            if (switchError.code === 4902) {
+              await web3Provider.request({
+                method: 'wallet_addEthereumChain',
+                params: [{
+                  chainId: POLYGON_CHAIN_ID,
+                  chainName: 'Polygon Mainnet',
+                  rpcUrls: ['https://polygon-rpc.com'],
+                  nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
+                  blockExplorerUrls: ['https://polygonscan.com']
+                }]
+              });
+            }
           }
-        } catch (switchError) {
-          // If switch fails, add Polygon chain
-          await web3Provider.request({
-            method: 'wallet_addEthereumChain',
-            params: [{
-              chainId: POLYGON_CHAIN_ID,
-              chainName: 'Polygon Mainnet',
-              rpcUrls: ['https://polygon-rpc.com'],
-              nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
-              blockExplorerUrls: ['https://polygonscan.com']
-            }]
-          });
         }
 
-        // 🔥 STEP 5: ETHERJS PROVIDER
+        // 🔥 ETHER.JS V5 PROVIDER
         provider = new ethers.providers.Web3Provider(web3Provider);
         wallet = accounts[0];
         
@@ -216,7 +227,7 @@
         
       } catch (error) {
         console.error('Wallet Error:', error);
-        document.getElementById('status').innerHTML = `❌ ${error.message}`;
+        document.getElementById('status').innerHTML = `❌ Error: ${error.message}`;
         document.getElementById('status').className = 'status error';
       }
     }
@@ -234,9 +245,7 @@
         console.log('🔍 Scanning FULL contract history...');
         
         const filter = contract.filters.UserJoined(null, targetAddress.toLowerCase());
-        const events = await contract.queryFilter(filter, 0, 'latest');
-        
-        console.log(`📊 Found ${events.length} events for ${targetAddress}`);
+        const events = await contract.queryFilter(filter, 0, 'latest');console.log(`📊 Found ${events.length} events for ${targetAddress}`);
         
         const referralsList = events.map(event => event.args.user.toLowerCase());
         const uniqueReferrals = [...new Set(referralsList)];
@@ -249,7 +258,9 @@
         document.getElementById('status').innerHTML = '❌ Loading failed! Try refresh.';
         document.getElementById('status').className = 'status error';
       }
-    }function displayReferrals(referralsList, targetAddress) {
+    }
+
+    function displayReferrals(referralsList, targetAddress) {
       const list = document.getElementById('referralList');
       const count = referralsList.length;
       
@@ -284,8 +295,8 @@
 
     // 🔥 SEARCH
     document.getElementById('searchInput').oninput = function() {
-      const query = this.value.trim();
-      if (query.length >= 6) {
+      const query = this.value.trim().toLowerCase();
+      if (query.length >= 6 && ethers.utils.isAddress(query)) {
         loadReferralsPERFECT(query);
       } else if (query.length === 0 && wallet) {
         loadReferralsPERFECT(wallet.toLowerCase());
@@ -296,8 +307,10 @@
     function copyAddress(address) {
       navigator.clipboard.writeText(address).then(() => {
         const btn = event.target;
-        btn.innerHTML = '✅';
-        setTimeout(() => btn.innerHTML = '📋', 1000);
+        btn.className = 'fas fa-check copy-btn';  // FIXED ICON
+        setTimeout(() => {
+          btn.className = 'fas fa-copy copy-btn';
+        }, 1000);
         alert('✅ Copied!');
       });
     }
