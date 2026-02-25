@@ -3,183 +3,307 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>AsiaX Pro • Referral Network</title>
+  <title>AsiaX Pro • Master DAO</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
     body {
       background: linear-gradient(135deg, #0f001a 0%, #05000f 100%);
       color: #e0e0ff;
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Inter', sans-serif;
       min-height: 100vh;
-      overflow-x: hidden;
+      margin: 0;
     }
+
     .glass {
       background: rgba(30, 20, 60, 0.4);
       backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border: 1px solid rgba(100, 100, 255, 0.15);
       border-radius: 1.5rem;
     }
+
     .neon-border {
-      box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
-      transition: all 0.4s ease;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
     }
-    .neon-border:hover {
-      box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
-    }
-    .status-circle {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 3rem;
-      transition: transform 0.5s ease, box-shadow 0.5s ease;
-      background: rgba(20, 20, 40, 0.6);
-      border: 2px solid #333366;
-    }
-    .active {
-      transform: scale(1.1);
-      box-shadow: 0 0 30px rgba(0, 255, 180, 0.5);
-      border-color: #00ffb3;
-      background: linear-gradient(135deg, rgba(0, 255, 180, 0.15), rgba(0, 180, 255, 0.1));
-    }
+
     .connect-btn {
       background: linear-gradient(90deg, #00d4ff, #7b00ff);
-      box-shadow: 0 8px 25px rgba(0, 212, 255, 0.4);
+      box-shadow: 0 8px 20px rgba(0, 212, 255, 0.3);
       transition: all 0.3s ease;
+      color: white !important;
     }
+
     .connect-btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 12px 35px rgba(123, 0, 255, 0.6);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(123, 0, 255, 0.5);
     }
-    .tree-line {
-      height: 2px;
-      background: linear-gradient(to right, transparent, #00d4ff, #7b00ff, transparent);
-      opacity: 0.6;
+
+    .vote-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 1rem;
+      transition: 0.3s;
+      color: white;
     }
+
+    .vote-box:hover {
+      background: rgba(0, 212, 255, 0.1);
+      border-color: #00d4ff;
+      color: #00d4ff;
+    }
+
+    .action-input {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: white;
+      outline: none;
+      transition: all 0.3s;
+    }
+
+    .action-input:focus {
+      border-color: #00d4ff;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .dao-table-container {
+      max-height: 400px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #7b00ff #0f001a;
+    }
+
+    .dao-table-container::-webkit-scrollbar { width: 6px; }
+    .dao-table-container::-webkit-scrollbar-thumb { background: #7b00ff; border-radius: 10px; }
+
+    .timer-box {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 10px 12px;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .withdraw-btn {
+      background: linear-gradient(90deg, #ff4b2b, #ff416c);
+      transition: all 0.3s;
+    }
+
+    .withdraw-btn:disabled,
+    .withdraw-btn[disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    input::-webkit-outer-spin-button, 
+    input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
+
+    th { z-index: 10; }
   </style>
 </head>
-<body class="antialiased">
+<body class="antialiased p-4 sm:p-6">
 
-<div class="max-w-lg mx-auto px-5 py-8">
-
-  <div class="flex flex-col sm:flex-row justify-between items-center gap-6 mb-12">
-    <div class="text-3xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
-      ASIAXPRO
+<div class="max-w-2xl mx-auto px-2 sm:px-4 py-6 sm:py-8">
+  <div class="flex justify-between items-center mb-10">
+    <div class="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
+      ASIAX DAO
     </div>
-    <button id="connectBtn" class="connect-btn text-black font-semibold px-6 py-2.5 rounded-full flex items-center gap-2 shadow-lg neon-border" onclick="connectWallet()">
+    <button id="connectBtn" class="connect-btn text-white text-sm font-bold px-5 py-2.5 rounded-full flex items-center gap-2 shadow-lg" onclick="connectWallet()">
       <i class="fa-solid fa-wallet"></i>
       <span>Connect Wallet</span>
     </button>
   </div>
 
-  <h1 class="text-4xl font-extrabold text-center mb-10 bg-gradient-to-r from-purple-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
-    CRYPTO QUIZ
-  </h1>
+  <div class="text-center mb-10">
+    <h1 class="text-4xl sm:text-5xl font-extrabold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-2">
+      DAO MEMBERSHIP
+    </h1>
+  </div>
 
-  <div class="glass p-4 mb-10 neon-border text-center max-w-xs mx-auto">
-    <div class="text-[10px] text-gray-400 mb-1 uppercase tracking-widest">MY WALLET ADDRESS</div>
-    <div id="userAddr" class="font-mono text-sm break-all text-white font-medium">
-      Not Connected
+  <div class="grid grid-cols-3 gap-3 sm:gap-4 mb-8">
+    <div class="glass p-4 text-center border-b-2 border-purple-600/50">
+      <div class="text-[10px] sm:text-xs text-gray-400 uppercase mb-1">My Rank</div>
+      <div class="text-xl sm:text-2xl font-bold">#12</div>
     </div>
-    <button onclick="copyAddress()" class="mt-3 text-cyan-400 hover:text-cyan-300 transition flex items-center justify-center mx-auto gap-2 text-xs">
-      <i class="fa-solid fa-copy"></i> Copy Address
+    <div class="glass p-4 text-center border-b-2 border-purple-600/50">
+      <div class="text-[10px] sm:text-xs text-gray-400 uppercase mb-1">Voting Power</div>
+      <div class="text-xl sm:text-2xl font-bold">1.45%</div>
+    </div>
+    <div class="glass p-4 text-center border-b-2 border-purple-600/50">
+      <div class="text-[10px] sm:text-xs text-gray-400 uppercase mb-1">Badge</div>
+      <div class="text-sm sm:text-base font-bold text-cyan-400 pt-1">SHARK 🦈</div>
+    </div>
+  </div>
+
+  <div class="mb-10 text-center">
+    <div class="text-xs sm:text-sm text-cyan-400 font-bold uppercase tracking-[0.25em] mb-4">DAO Active Voting</div>
+    <div class="grid grid-cols-4 gap-3 sm:gap-4 mb-3">
+      <button onclick="castVote('A')" class="vote-box py-6 sm:py-8 text-2xl sm:text-3xl font-bold">A</button>
+      <button onclick="castVote('B')" class="vote-box py-6 sm:py-8 text-2xl sm:text-3xl font-bold">B</button>
+      <button onclick="castVote('C')" class="vote-box py-6 sm:py-8 text-2xl sm:text-3xl font-bold">C</button>
+      <button onclick="castVote('D')" class="vote-box py-6 sm:py-8 text-2xl sm:text-3xl font-bold">D</button>
+    </div>
+    <p class="text-xs text-gray-500">Select an option to participate in current governance proposal</p>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+    <div class="glass p-5 border-l-4 border-purple-500">
+      <div class="text-xs text-gray-400 uppercase mb-1">Marketing Wallet Balance</div>
+      <div class="text-xl font-bold">45,250.00 <span class="text-sm text-purple-400">ASIAX</span></div>
+      <div class="text-xs text-gray-600 mt-1">Total coins available for distribution</div>
+    </div>
+    <div class="glass p-5 border-l-4 border-cyan-500">
+      <div class="text-xs text-gray-400 uppercase mb-1">My Unclaimed Reward</div>
+      <div class="flex justify-between items-end">
+        <div class="text-xl font-bold text-cyan-400">125.50 <span class="text-sm text-cyan-600">ASIAX</span></div>
+        <button onclick="claimReward()" class="bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-bold px-4 py-2.5 rounded-md transition">CLAIM REWARD</button>
+      </div>
+      <div class="text-xs text-gray-600 mt-1">Based on your DAO membership rank</div>
+    </div>
+  </div>
+
+  <div class="text-xs text-gray-500 text-center mb-4 uppercase tracking-widest">Top 100 Governance Token Holders</div>
+  <div class="glass neon-border overflow-hidden mb-10">
+    <div class="p-4 bg-white/5 border-b border-white/5 flex justify-between items-center text-sm">
+      <span class="font-bold text-cyan-400"><i class="fa-solid fa-users mr-2"></i>Member List</span>
+      <span class="text-gray-400">Total: 100 Members</span>
+    </div>
+    <div class="dao-table-container">
+      <table class="w-full text-left text-sm">
+        <thead class="text-gray-400 uppercase text-xs border-b border-white/5 sticky top-0 bg-[#160d2b]">
+          <tr><th class="p-4">Rank</th><th class="p-4">Wallet</th><th class="p-4 text-right">Coins</th></tr>
+        </thead>
+        <tbody id="daoList"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="glass p-6 neon-border mb-8">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div>
+        <h2 class="text-lg font-bold text-white"><i class="fa-solid fa-arrow-up-right-dots mr-2 text-cyan-400"></i>Rank Up</h2>
+        <p class="text-sm text-gray-400">Add AsiaX coins to increase your DAO voting power</p>
+      </div>
+      <div class="bg-white/5 px-4 py-3 rounded-lg border border-white/10 w-full sm:w-auto min-w-[180px]">
+        <div class="text-xs text-gray-400 uppercase">My Wallet Balance</div>
+        <div class="text-base font-mono text-cyan-300"><span id="userBalance">0.00</span> <span class="text-xs">ASIAX</span></div>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-4">
+      <div class="relative">
+        <input type="number" id="stakeAmount" min="0" step="any" placeholder="Enter amount to stake" class="action-input w-full p-4 rounded-xl text-base" />
+        <button onclick="setMax()" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs bg-cyan-500/30 text-cyan-300 px-3 py-1.5 rounded hover:bg-cyan-500/50 transition">MAX</button>
+      </div>
+      <button onclick="addCoinsToDAO()" class="connect-btn text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg">
+        <i class="fa-solid fa-plus-circle"></i> Join / Upgrade DAO Rank
+      </button>
+    </div>
+    <p class="text-xs text-center text-gray-500 mt-4">Note: Added coins will be locked for governance voting cycles.</p>
+  </div>
+
+  <div class="glass p-6 border border-red-500/30">
+    <div class="flex flex-col sm:flex-row justify-between items-center gap-6 text-center sm:text-left">
+      <div>
+        <h2 class="text-base font-bold text-red-400 mb-2"><i class="fa-solid fa-clock-rotate-left mr-2"></i>24 Months Lock-up</h2>
+        <p class="text-sm text-gray-500 italic">Your principal coins will unlock after the timer reaches zero.</p>
+      </div>
+      <div class="flex gap-2 sm:gap-3">
+        <div class="timer-box"><div id="days" class="text-xl font-bold">00</div><div class="text-xs text-gray-400">DAYS</div></div>
+        <div class="timer-box"><div id="hours" class="text-xl font-bold">00</div><div class="text-xs text-gray-400">HRS</div></div>
+        <div class="timer-box"><div id="mins" class="text-xl font-bold">00</div><div class="text-xs text-gray-400">MINS</div></div>
+        <div class="timer-box"><div id="secs" class="text-xl font-bold">00</div><div class="text-xs text-gray-400">SECS</div></div>
+      </div>
+    </div>
+
+    <div class="mt-6">
+      <div class="flex justify-between text-sm mb-3 text-gray-300">
+        <span>Locked Principal: <span class="text-white font-bold">5,000 ASIAX</span></span>
+        <span>Status: <span class="text-red-400 font-bold">LOCKED</span></span>
+      </div>
+      <button id="withdrawBtn" disabled onclick="withdrawPrincipal()" class="withdraw-btn w-full text-white font-bold py-4 rounded-xl text-base flex items-center justify-center gap-2">
+        <i class="fa-solid fa-lock"></i> WITHDRAW PRINCIPAL
+      </button>
+    </div>
+  </div>
+
+  <div class="mt-10 text-center pb-12">
+    <button class="text-purple-400 hover:text-purple-300 text-xs font-bold uppercase tracking-widest transition">
+      <i class="fa-solid fa-arrow-left mr-1"></i> Back to Dashboard
     </button>
   </div>
-
-  <button onclick="window.location.href='/'" class="glass text-white text-sm font-medium py-3 px-8 rounded-xl mx-auto block mb-12 neon-border hover:bg-white/5 transition">
-    ← Back to Home
-  </button>
-
-  <div class="relative text-center mb-16">
-    <div id="userCircle" class="status-circle mx-auto neon-border">
-      <i class="fa-solid fa-user-shield text-gray-500"></i>
-    </div>
-    <div class="absolute top-[45%] left-[30%] w-[40%] tree-line transform -rotate-30"></div>
-    <div class="absolute top-[45%] right-[30%] w-[40%] tree-line transform rotate-30"></div>
-    <div class="flex justify-center gap-12 sm:gap-20 mt-16">
-      <div id="ref1Circle" class="status-circle neon-border">
-        <i class="fa-solid fa-user-plus text-gray-500"></i>
-      </div>
-      <div id="ref2Circle" class="status-circle neon-border">
-        <i class="fa-solid fa-user-plus text-gray-500"></i>
-      </div>
-    </div>
-  </div>
-
-  <div class="text-center text-xs text-gray-500">
-    Play the quiz and earn unlimited Alisa Coins
-  </div>
-
 </div>
 
 <script>
-  const CONTRACT_ADDRESS = "0xF6d0d72AAf0Bbf5C459E680f1e6E75E3B1ce1f06";
-  const ABI = [
-    "function userBasic(address) view returns (address referrer, uint256 totalInvestment, uint256 firstInvestmentTime, uint256 lastROICalculation, uint256 totalWithdrawn, uint256 sponsorIncome, uint256 generationIncome, uint256 totalROIWithdrawn, uint256 totalPoolIncomeWithdrawn, uint256 totalSponsorWithdrawn, uint256 totalGenerationWithdrawn)",
-    "function userNetwork(address) view returns (uint256 totalTeam, uint256 activeDirects, bool silverPoolMember, bool goldPoolMember, bool platinumPoolMember, uint256 silverPoolJoinTime, uint256 goldPoolJoinTime, uint256 platinumPoolJoinTime)"
-  ];
-
-  let provider, signer, contract;
-
-  async function connectWallet() {
-    if (!window.ethereum) return alert("Please install MetaMask!");
-    try {
-      provider = new ethers.BrowserProvider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
-      signer = await provider.getSigner();
-      const addr = await signer.getAddress();
-      contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-
-      // Fixed Button Text Logic
-      const shortAddr = addr.substring(0, 6) + "..." + addr.substring(addr.length - 4);
-      document.getElementById("connectBtn").innerHTML = `<i class="fa-solid fa-wallet"></i> ${shortAddr}`;
-      document.getElementById("userAddr").textContent = addr;
-
-      loadData(addr);
-    } catch (err) {
-      console.error(err);
-      alert("Connection failed");
+  // Dummy leaderboard
+  function loadLeaderboard() {
+    const body = document.getElementById('daoList');
+    let rows = "";
+    for(let i = 1; i <= 100; i++) {
+      const addr = "0x" + Math.random().toString(16).slice(2,10).padEnd(8,"0") + "..." + Math.random().toString(16).slice(-4);
+      const coins = (Math.random() * 80000 + 500).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      rows += `
+      <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+        <td class="p-4 text-gray-500">${i}</td>
+        <td class="p-4 font-mono text-gray-300">${addr}</td>
+        <td class="p-4 text-right font-bold text-purple-300">${coins} <span class="text-xs text-gray-500">AXP</span></td>
+      </tr>`;
     }
+    body.innerHTML = rows;
   }
 
-  async function loadData(addr) {
-    try {
-      const [basic, network] = await Promise.all([
-        contract.userBasic(addr),
-        contract.userNetwork(addr)
-      ]);
-      const invested = Number(basic.totalInvestment) > 0;
-      const directs = Number(network.activeDirects);
-
-      document.getElementById("userCircle").classList.toggle("active", invested);
-      document.getElementById("userCircle").innerHTML = invested ? '<i class="fa-solid fa-check text-cyan-300"></i>' : '<i class="fa-solid fa-user-shield text-gray-500"></i>';
-
-      const r1 = document.getElementById("ref1Circle");
-      r1.classList.toggle("active", directs >= 1);
-      r1.innerHTML = directs >= 1 ? '<i class="fa-solid fa-check text-cyan-300"></i>' : '<i class="fa-solid fa-user-plus text-gray-500"></i>';
-
-      const r2 = document.getElementById("ref2Circle");
-      r2.classList.toggle("active", directs >= 2);
-      r2.innerHTML = directs >= 2 ? '<i class="fa-solid fa-check text-cyan-300"></i>' : '<i class="fa-solid fa-user-plus text-gray-500"></i>';
-    } catch (err) {
-      console.error("Data Load Error:", err);
-    }
+  // Simple 24-month countdown example (for demo)
+  function startTimer() {
+    const lockEnd = Date.now() + 24 * 30 * 24 * 60 * 60 * 1000; // \~24 months
+    const interval = setInterval(() => {
+      const diff = lockEnd - Date.now();
+      if (diff <= 0) {
+        clearInterval(interval);
+        document.getElementById('days').textContent = '00';
+        document.getElementById('hours').textContent = '00';
+        document.getElementById('mins').textContent = '00';
+        document.getElementById('secs').textContent = '00';
+        document.getElementById('withdrawBtn').disabled = false;
+        return;
+      }
+      const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((diff % (1000 * 60)) / 1000);
+      document.getElementById('days').textContent = d.toString().padStart(2, '0');
+      document.getElementById('hours').textContent = h.toString().padStart(2, '0');
+      document.getElementById('mins').textContent = m.toString().padStart(2, '0');
+      document.getElementById('secs').textContent = s.toString().padStart(2, '0');
+    }, 1000);
   }
 
-  function copyAddress() {
-    const addr = document.getElementById("userAddr").textContent;
-    if (addr.includes("Not Connected")) return alert("Connect wallet first!");
-    navigator.clipboard.writeText(addr.trim());
-    alert("Address copied!");
-  }
+  window.onload = () => {
+    loadLeaderboard();
+    startTimer();
+  };
 
-  if (window.ethereum) {
-    window.ethereum.on("accountsChanged", () => location.reload());
+  // Placeholder functions
+  function connectWallet() { alert("Connecting wallet... (MetaMask / WalletConnect etc.)"); }
+  function castVote(opt) { alert(`Voted for option ${opt}`); }
+  function claimReward() { alert("Claiming your rewards..."); }
+  function addCoinsToDAO() {
+    const amt = document.getElementById('stakeAmount').value;
+    if (!amt || amt <= 0) return alert("Enter valid amount");
+    alert(`Staking ${amt} ASIAX to upgrade rank...`);
+  }
+  function setMax() {
+    // In real code → fetch from contract / ethers
+    document.getElementById('stakeAmount').value = "1234.56";
+  }
+  function withdrawPrincipal() {
+    alert("Withdraw requested – waiting for unlock period to complete.");
   }
 </script>
+
 </body>
 </html>
