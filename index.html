@@ -93,13 +93,19 @@
       transition: all 0.3s;
     }
 
-    .withdraw-btn:disabled,
-    .withdraw-btn[disabled] {
+    .withdraw-btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
 
-    input::-webkit-outer-spin-button, 
+    /* New Coin Reward Row Style */
+    .coin-row {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 12px 0;
+    }
+    .coin-row:last-child { border-bottom: none; }
+
+    input::-webkit-outer-spin-button,
     input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
 
@@ -131,7 +137,7 @@
       <div class="text-xl sm:text-2xl font-bold">#12</div>
     </div>
     <div class="glass p-4 text-center border-b-2 border-purple-600/50">
-      <div class="text-[10px] sm:text-xs text-gray-400 uppercase mb-1">Voting Power</div>
+      <div class="text-[10px] sm:text-xs text-gray-400 uppercase mb-1">Voting RESULT</div>
       <div class="text-xl sm:text-2xl font-bold">1.45%</div>
     </div>
     <div class="glass p-4 text-center border-b-2 border-purple-600/50">
@@ -161,10 +167,21 @@
       <div class="text-xs text-gray-400 uppercase mb-1">My Unclaimed Reward</div>
       <div class="flex justify-between items-end">
         <div class="text-xl font-bold text-cyan-400">125.50 <span class="text-sm text-cyan-600">ASIAX</span></div>
-        <button onclick="claimReward()" class="bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-bold px-4 py-2.5 rounded-md transition">CLAIM REWARD</button>
+        <button onclick="claimReward('ASIAX')" class="bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-bold px-4 py-2.5 rounded-md transition">CLAIM REWARD</button>
       </div>
       <div class="text-xs text-gray-600 mt-1">Based on your DAO membership rank</div>
     </div>
+  </div>
+
+  <div class="text-xs text-gray-500 text-center mb-4 uppercase tracking-widest">Multi-Asset Rewards Distribution</div>
+  <div class="glass neon-border overflow-hidden mb-10 p-5">
+    <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-3">
+        <span class="font-bold text-cyan-400"><i class="fa-solid fa-coins mr-2"></i>Available Token Rewards</span>
+        <span class="text-[10px] text-gray-500">Claim per asset</span>
+    </div>
+    
+    <div id="multiCoinList">
+        </div>
   </div>
 
   <div class="text-xs text-gray-500 text-center mb-4 uppercase tracking-widest">Top 100 Governance Token Holders</div>
@@ -240,26 +257,63 @@
 </div>
 
 <script>
+  // Coin List Data
+  const coins = [
+    { name: "USDT", balance: "25.00" },
+    { name: "BNB", balance: "0.145" },
+    { name: "BTC", balance: "0.0002" },
+    { name: "ETH", balance: "0.015" },
+    { name: "SOL", balance: "1.24" },
+    { name: "MATIC", balance: "150.00" },
+    { name: "DOGE", balance: "500.00" },
+    { name: "XRP", balance: "85.40" },
+    { name: "ADA", balance: "210.00" },
+    { name: "DOT", balance: "12.50" }
+  ];
+
+  function loadMultiCoinRewards() {
+    const container = document.getElementById('multiCoinList');
+    let html = "";
+    coins.forEach(coin => {
+        html += `
+        <div class="coin-row flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+                    <span class="text-[10px] font-bold text-purple-400">${coin.name[0]}</span>
+                </div>
+                <div>
+                    <div class="text-sm font-bold text-white">${coin.name}</div>
+                    <div class="text-[10px] text-gray-500">Balance: <span class="text-cyan-400">${coin.balance}</span></div>
+                </div>
+            </div>
+            <button onclick="claimReward('${coin.name}')" class="bg-white/5 hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-500/50 text-cyan-400 text-[10px] font-bold px-4 py-1.5 rounded-lg transition uppercase tracking-wider">
+                Claim
+            </button>
+        </div>
+        `;
+    });
+    container.innerHTML = html;
+  }
+
   // Dummy leaderboard
   function loadLeaderboard() {
     const body = document.getElementById('daoList');
     let rows = "";
     for(let i = 1; i <= 100; i++) {
       const addr = "0x" + Math.random().toString(16).slice(2,10).padEnd(8,"0") + "..." + Math.random().toString(16).slice(-4);
-      const coins = (Math.random() * 80000 + 500).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      const coinsVal = (Math.random() * 80000 + 500).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
       rows += `
       <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
         <td class="p-4 text-gray-500">${i}</td>
         <td class="p-4 font-mono text-gray-300">${addr}</td>
-        <td class="p-4 text-right font-bold text-purple-300">${coins} <span class="text-xs text-gray-500">AXP</span></td>
+        <td class="p-4 text-right font-bold text-purple-300">${coinsVal} <span class="text-xs text-gray-500">AXP</span></td>
       </tr>`;
     }
     body.innerHTML = rows;
   }
 
-  // Simple 24-month countdown example (for demo)
   function startTimer() {
-    const lockEnd = Date.now() + 24 * 30 * 24 * 60 * 60 * 1000; // \~24 months
+    const lockEnd = Date.now() + 24 * 30 * 24 * 60 * 60 * 1000;
     const interval = setInterval(() => {
       const diff = lockEnd - Date.now();
       if (diff <= 0) {
@@ -285,24 +339,20 @@
   window.onload = () => {
     loadLeaderboard();
     startTimer();
+    loadMultiCoinRewards();
   };
 
-  // Placeholder functions
-  function connectWallet() { alert("Connecting wallet... (MetaMask / WalletConnect etc.)"); }
+  // Actions
+  function connectWallet() { alert("Connecting wallet..."); }
   function castVote(opt) { alert(`Voted for option ${opt}`); }
-  function claimReward() { alert("Claiming your rewards..."); }
+  function claimReward(coinName) { alert(`Claiming your ${coinName} rewards...`); }
   function addCoinsToDAO() {
     const amt = document.getElementById('stakeAmount').value;
     if (!amt || amt <= 0) return alert("Enter valid amount");
     alert(`Staking ${amt} ASIAX to upgrade rank...`);
   }
-  function setMax() {
-    // In real code → fetch from contract / ethers
-    document.getElementById('stakeAmount').value = "1234.56";
-  }
-  function withdrawPrincipal() {
-    alert("Withdraw requested – waiting for unlock period to complete.");
-  }
+  function setMax() { document.getElementById('stakeAmount').value = "1234.56"; }
+  function withdrawPrincipal() { alert("Withdraw requested."); }
 </script>
 
 </body>
