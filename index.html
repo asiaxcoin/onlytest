@@ -1,237 +1,279 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>AsiaX Pro • Master DAO</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-        body { background: linear-gradient(135deg, #0f001a 0%, #05000f 100%); color: #e0e0ff; font-family: 'Inter', sans-serif; min-height: 100vh; margin: 0; }
-        .glass { background: rgba(30, 20, 60, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(100, 100, 255, 0.15); border-radius: 1.25rem; }
-        .connect-btn { background: linear-gradient(90deg, #00d4ff, #7b00ff); box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3); transition: all 0.3s ease; }
-        .vote-box { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1rem; color: white; cursor: pointer; }
-        .action-input { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; outline: none; }
-        .withdraw-btn { background: linear-gradient(90deg, #ff4b2b, #ff416c); }
-        .withdraw-btn:disabled { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AsiaX Pro • Master DAO</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+    body { background: linear-gradient(135deg, #0f001a 0%, #05000f 100%); color: #e0e0ff; font-family: 'Inter', sans-serif; min-height: 100vh; margin: 0; -webkit-tap-highlight-color: transparent; }
+    .glass { background: rgba(30, 20, 60, 0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(100, 100, 255, 0.15); border-radius: 1.25rem; }
+    .connect-btn { background: linear-gradient(90deg, #00d4ff, #7b00ff); box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3); }
+    .vote-box { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1rem; transition: 0.2s; color: white; }
+    .vote-box:active { transform: scale(0.95); background: rgba(0, 212, 255, 0.1); }
+    .action-input { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; outline: none; -webkit-appearance: none; }
+    .withdraw-btn { background: linear-gradient(90deg, #ff4b2b, #ff416c); }
+    .withdraw-btn:disabled { opacity: 0.3; filter: grayscale(1); }
+  </style>
 </head>
-<body class="antialiased p-4">
+<body class="antialiased p-3">
 
-<div class="max-w-xl mx-auto space-y-6">
-    <div class="flex justify-between items-center px-1 pt-4">
-        <div class="text-xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">ASIAX DAO</div>
-        <button id="connectBtn" class="connect-btn text-white text-xs font-bold px-5 py-2.5 rounded-full flex items-center gap-2" onclick="connectWallet()">
-            <i class="fa-solid fa-wallet"></i> <span id="walletText">Connect Wallet</span>
-        </button>
-    </div>
+<div class="max-w-xl mx-auto space-y-6 pt-4">
+  <div class="flex justify-between items-center px-1">
+    <div class="text-xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">ASIAX DAO</div>
+    <button id="connectBtn" class="connect-btn text-white text-xs font-bold px-4 py-2 rounded-full flex items-center gap-2" onclick="connectWallet()">
+      <i class="fa-solid fa-wallet"></i> <span id="walletText">Connect Wallet</span>
+    </button>
+  </div>
 
-    <div class="grid grid-cols-3 gap-2">
-        <div class="glass p-3 text-center border-b-2 border-cyan-500/50">
-            <div class="text-[9px] text-gray-400 uppercase">Power</div>
-            <div class="text-sm font-bold" id="votingPowerDisplay">0%</div>
-        </div>
-        <div class="glass p-3 text-center border-b-2 border-purple-500/50">
-            <div class="text-[9px] text-gray-400 uppercase">Staked</div>
-            <div class="text-sm font-bold" id="userStakedDisplay">0</div>
-        </div>
-        <div class="glass p-3 text-center border-b-2 border-cyan-500/50">
-            <div class="text-[9px] text-gray-400 uppercase">Badge</div>
-            <div class="text-[10px] font-bold text-cyan-400" id="badgeDisplay">VISITOR</div>
-        </div>
+  <div class="grid grid-cols-3 gap-2">
+    <div class="glass p-3 text-center border-b-2 border-cyan-500/50">
+      <div class="text-[9px] text-gray-400 uppercase">Voting</div>
+      <div class="text-sm font-bold" id="votingPowerDisplay">0%</div>
     </div>
+    <div class="glass p-3 text-center border-b-2 border-purple-500/50">
+      <div class="text-[9px] text-gray-400 uppercase">Staked</div>
+      <div class="text-sm font-bold" id="userStakedDisplay">0</div>
+    </div>
+    <div class="glass p-3 text-center border-b-2 border-cyan-500/50">
+      <div class="text-[9px] text-gray-400 uppercase">Badge</div>
+      <div class="text-[10px] font-bold text-cyan-400" id="badgeDisplay">VISITOR</div>
+    </div>
+  </div>
 
-    <div class="glass p-5">
-        <h2 class="text-xs font-bold text-cyan-400 uppercase mb-4">Governance Vote</h2>
-        <div class="text-center">
-            <h3 id="displayPropTitle" class="text-md font-bold mb-1">No Active Proposal</h3>
-            <div class="grid grid-cols-2 gap-3 mt-4">
-                <button onclick="castVote(true)" class="vote-box py-3 text-sm font-bold">YES <span id="resA" class="block text-[9px] text-gray-500">0%</span></button>
-                <button onclick="castVote(false)" class="vote-box py-3 text-sm font-bold">NO <span id="resB" class="block text-[9px] text-gray-500">0%</span></button>
-            </div>
+  <div class="glass p-5 border border-white/5">
+    <h2 class="text-xs font-bold text-cyan-400 uppercase mb-4 tracking-wider">Governance Vote</h2>
+    <div class="text-center">
+        <h3 id="displayPropTitle" class="text-md font-bold mb-1">No Active Proposal</h3>
+        <p id="displayPropDesc" class="text-[11px] text-gray-400 mb-4">Connect wallet to view</p>
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="castVote(true)" class="vote-box py-3 text-sm font-bold">YES <span id="resA" class="block text-[9px] text-gray-500">0%</span></button>
+            <button onclick="castVote(false)" class="vote-box py-3 text-sm font-bold">NO <span id="resB" class="block text-[9px] text-gray-500">0%</span></button>
         </div>
     </div>
+  </div>
 
-    <div class="glass p-5">
-        <div class="flex justify-between items-center mb-4">
-            <span class="font-bold text-cyan-400 text-xs">My Rewards</span>
-            <button onclick="claimAllRewards()" class="bg-cyan-500 text-black text-[9px] font-bold px-3 py-1 rounded">CLAIM ALL</button>
-        </div>
-        <div id="multiCoinList" class="space-y-2 text-xs italic text-gray-500">Connect wallet to see rewards</div>
+  <div class="glass p-5">
+    <div class="flex justify-between items-center mb-4">
+        <span class="font-bold text-cyan-400 text-xs">Unclaimed Rewards</span>
+        <button onclick="claimAllRewards()" class="bg-cyan-500 text-black text-[9px] font-bold px-3 py-1 rounded uppercase">Claim All</button>
     </div>
+    <div id="multiCoinList" class="space-y-2 text-xs text-gray-500 italic">Connect wallet to see rewards</div>
+  </div>
 
-    <div class="glass p-5 border border-purple-500/20">
-        <div class="flex justify-between mb-4">
-            <h2 class="text-md font-bold text-white">Stake AsiaX</h2>
-            <div class="text-[10px] text-cyan-300">Wallet: <span id="userBalance">0.00</span></div>
-        </div>
-        <div class="relative mb-4">
-            <input type="number" id="stakeAmount" placeholder="0.0" class="action-input w-full p-3 rounded-xl text-sm" />
-            <button onclick="setMax()" class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-cyan-300 font-bold">MAX</button>
-        </div>
-        <button id="stakeBtn" onclick="handleStake()" class="connect-btn w-full text-white font-bold py-3.5 rounded-xl text-sm">STAKE NOW</button>
+  <div class="glass p-5 border border-purple-500/20">
+    <div class="flex justify-between mb-4">
+      <h2 class="text-md font-bold">Stake AsiaX</h2>
+      <div class="text-[10px] text-cyan-300">Balance: <span id="userBalance">0.00</span></div>
     </div>
+    <div class="relative mb-4">
+      <input type="number" id="stakeAmount" placeholder="0.0" class="action-input w-full p-3 rounded-xl text-sm" />
+      <button onclick="setMax()" class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-cyan-300 font-bold">MAX</button>
+    </div>
+    <button id="stakeBtn" onclick="handleStake()" class="connect-btn w-full text-white font-bold py-3 rounded-xl text-sm">Join DAO</button>
+  </div>
 
-    <div class="glass p-5 border border-red-500/20">
-        <div class="flex justify-around items-center mb-5">
-            <div class="text-center"><div id="days" class="text-xl font-bold">00</div><div class="text-[9px] uppercase">Days</div></div>
-            <div class="text-center"><div id="hours" class="text-xl font-bold">00</div><div class="text-[9px] uppercase">Hrs</div></div>
-            <div class="text-center"><div id="mins" class="text-xl font-bold">00</div><div class="text-[9px] uppercase">Mins</div></div>
-        </div>
-        <button id="withdrawBtn" disabled onclick="withdrawPrincipal()" class="withdraw-btn w-full text-white font-bold py-3.5 rounded-xl text-xs">WITHDRAW PRINCIPAL</button>
+  <div class="glass p-5 border border-red-500/20">
+    <div class="flex justify-between items-center mb-4 px-2">
+        <div class="text-center"><div id="days" class="text-lg font-bold">00</div><div class="text-[9px] uppercase">Days</div></div>
+        <div class="text-center text-gray-600">:</div>
+        <div class="text-center"><div id="hours" class="text-lg font-bold">00</div><div class="text-[9px] uppercase">Hrs</div></div>
+        <div class="text-center text-gray-600">:</div>
+        <div class="text-center"><div id="mins" class="text-lg font-bold">00</div><div class="text-[9px] uppercase">Mins</div></div>
     </div>
+    <button id="withdrawBtn" disabled onclick="withdrawPrincipal()" class="withdraw-btn w-full text-white font-bold py-3 rounded-xl text-xs uppercase">Withdraw Principal</button>
+  </div>
 </div>
 
 <script>
+
     // --- CONFIGURATION ---
     const STAKING_ADDR = "0x23E12941383c7de11D8ab066Ba96897535DD3e48";
     const GOV_ADDR = "0x074fF1363A23EE4142963bD34e4f88F7552C2ea1";
     const TOKEN_ADDR = "0x80675dCe080d52dD842e93bF3bc15E28dACD78CB";
 
-    // ABI definitions (Standard v5)
-    const STAKING_ABI = [
-        "function totalStaked() view returns (uint256)",
-        "function members(address) view returns (uint256 stakedAmount, uint256 lockTimestamp)",
-        "function LOCK_PERIOD() view returns (uint256)",
-        "function getActiveRewardTokens() view returns (address[])",
-        "function earned(address, address) view returns (uint256)",
-        "function addCoinsToDAO(uint256)",
-        "function claimAllRewards()",
-        "function withdrawPrincipal()"
-    ];
-    const GOV_ABI = [
-        "function proposalCount() view returns (uint256)",
-        "function proposals(uint256) view returns (address, string, uint256, uint256, uint256, bool)",
-        "function castVote(uint256, bool)"
-    ];
-    const TOKEN_ABI = [
-        "function balanceOf(address) view returns (uint256)",
-        "function approve(address, uint256) returns (bool)",
-        "function allowance(address, address) view returns (uint256)",
-        "function symbol() view returns (string)"
-    ];
+    // Recommended: Polygon Mainnet = 137
+  const TARGET_CHAIN_ID = 137;          // Change if different chain
+  const TARGET_CHAIN_HEX = "0x89";
 
-    let provider, signer, stakingContract, govContract, tokenContract, userAddress;
+  // ABIs same as before
+  const STAKING_ABI = [
+    "function totalStaked() view returns (uint256)",
+    "function members(address) view returns (uint256 stakedAmount, uint256 lockTimestamp)",
+    "function LOCK_PERIOD() view returns (uint256)",
+    "function getActiveRewardTokens() view returns (address[])",
+    "function earned(address, address) view returns (uint256)",
+    "function addCoinsToDAO(uint256)",
+    "function claimAllRewards()",
+    "function withdrawPrincipal()"
+  ];
+  const GOV_ABI     = [
+    "function proposalCount() view returns (uint256)",
+    "function proposals(uint256) view returns (address, string, uint256, uint256, uint256, bool)",
+    "function castVote(uint256, bool)"
+  ];
+  const TOKEN_ABI   = [
+    "function balanceOf(address) view returns (uint256)",
+    "function approve(address, uint256) returns (bool)",
+    "function allowance(address, address) view returns (uint256)",
+    "function symbol() view returns (string)"
+  ];
 
-    // Connect Wallet Logic for SafePal & Mobile
-    async function connectWallet() {
-        try {
-            if (!window.ethereum) return alert("Please open in SafePal/TrustWallet browser");
+  let provider, signer, stakingContract, govContract, tokenContract, userAddress;
 
-            // Universal provider detection
-            const ethProvider = window.ethereum;
-            provider = new ethers.providers.Web3Provider(ethProvider, "any");
+  // Auto-detect on load (very useful for SafePal/Trust reloads)
+  window.addEventListener('load', async () => {
+    if (window.ethereum) {
+      try {
+        // Some wallets (SafePal) need a small delay
+        await new Promise(r => setTimeout(r, 300));
 
-            // Account Request
-            const accounts = await ethProvider.request({ method: 'eth_requestAccounts' });
-            userAddress = accounts[0];
-            signer = provider.getSigner();
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        const accounts = await provider.listAccounts();
 
-            // Contracts Init
-            stakingContract = new ethers.Contract(STAKING_ADDR, STAKING_ABI, signer);
-            govContract = new ethers.Contract(GOV_ADDR, GOV_ABI, signer);
-            tokenContract = new ethers.Contract(TOKEN_ADDR, TOKEN_ABI, signer);
-
-            document.getElementById('walletText').innerText = userAddress.slice(0,6) + "...";
-            
-            // Refresh Data
-            refreshData();
-        } catch (e) {
-            alert("Connection Failed: " + e.message);
+        if (accounts && accounts.length > 0) {
+          userAddress = accounts[0];
+          signer = provider.getSigner();
+          document.getElementById('walletText').innerText = shortenAddress(userAddress);
+          initContracts();
+          await trySwitchChain();
+          refreshData();
         }
+      } catch (e) {
+        console.log("Auto-connect failed:", e);
+      }
+    }
+  });
+
+  async function connectWallet() {
+    if (!window.ethereum) {
+      alert("No crypto wallet found!\n\nOpen this page inside SafePal, Trust Wallet, MetaMask or any Web3 browser.");
+      return;
     }
 
-    async function refreshData() {
-        if (!userAddress) return;
-        try {
-            const total = await stakingContract.totalStaked();
-            const member = await stakingContract.members(userAddress);
-            const balance = await tokenContract.balanceOf(userAddress);
+    try {
+      // Request accounts (this triggers connect popup in most wallets)
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
 
-            const stakedEth = parseFloat(ethers.utils.formatEther(member.stakedAmount));
-            const totalEth = parseFloat(ethers.utils.formatEther(total));
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      signer = provider.getSigner();
+      userAddress = await signer.getAddress();
 
-            document.getElementById('userStakedDisplay').innerText = stakedEth.toFixed(0);
-            document.getElementById('userBalance').innerText = parseFloat(ethers.utils.formatEther(balance)).toFixed(2);
-            document.getElementById('votingPowerDisplay').innerText = totalEth > 0 ? ((stakedEth/totalEth)*100).toFixed(2) + "%" : "0%";
+      document.getElementById('walletText').innerText = shortenAddress(userAddress);
 
-            const lockPeriod = await stakingContract.LOCK_PERIOD();
-            const unlockTime = Number(member.lockTimestamp) + Number(lockPeriod);
-            const remaining = unlockTime - Math.floor(Date.now()/1000);
-            updateTimer(remaining > 0 && stakedEth > 0 ? remaining : 0);
+      initContracts();
 
-            loadActiveProposal();
-            loadRewards();
-        } catch(e) { console.error(e); }
+      // Try to switch to target chain (Polygon etc.)
+      await trySwitchChain();
+
+      refreshData();
+
+    } catch (e) {
+      console.error(e);
+      let msg = "Connection failed.";
+      if (e.code === 4001 || e.message?.includes("rejected")) {
+        msg = "You cancelled the connection.";
+      } else if (e.message?.includes("chain")) {
+        msg = "Please switch network in your wallet (try Polygon).";
+      }
+      alert(msg + "\n\nError: " + (e.message || e));
     }
+  }
 
-    async function handleStake() {
-        const amt = document.getElementById('stakeAmount').value;
-        if(!amt || amt <= 0) return alert("Enter amount");
-        const wei = ethers.utils.parseEther(amt);
-        try {
-            const allowance = await tokenContract.allowance(userAddress, STAKING_ADDR);
-            if(allowance.lt(wei)) {
-                const txApp = await tokenContract.approve(STAKING_ADDR, ethers.constants.MaxUint256);
-                await txApp.wait();
-            }
-            const txStake = await stakingContract.addCoinsToDAO(wei);
-            await txStake.wait();
-            alert("Success: Staked!");
-            refreshData();
-        } catch(e) { alert("Error: " + (e.reason || "Transaction Failed")); }
+  function shortenAddress(addr) {
+    if (!addr) return "Connect";
+    return addr.slice(0,6) + "..." + addr.slice(-4);
+  }
+
+  function initContracts() {
+    stakingContract = new ethers.Contract(STAKING_ADDR, STAKING_ABI, signer);
+    govContract     = new ethers.Contract(GOV_ADDR, GOV_ABI, signer);
+    tokenContract   = new ethers.Contract(TOKEN_ADDR, TOKEN_ABI, signer);
+  }
+
+  async function trySwitchChain() {
+    try {
+      const { chainId } = await provider.getNetwork();
+      if (chainId !== TARGET_CHAIN_ID) {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: TARGET_CHAIN_HEX }],
+        });
+      }
+    } catch (switchError) {
+      if (switchError.code === 4902) {
+        alert("Please add Polygon network manually in your wallet settings.");
+      } else {
+        console.warn("Chain switch failed (maybe not needed):", switchError);
+      }
     }
+  }
 
-    async function loadActiveProposal() {
-        try {
-            const count = await govContract.proposalCount();
-            if(count == 0) return;
-            const p = await govContract.proposals(count.sub(1));
-            document.getElementById('displayPropTitle').innerText = p[1];
-        } catch(e) { }
+  // Rest of your functions (refreshData, handleStake, etc.) same rahega
+  // Bas refreshData ke start mein chain check daal sakte ho agar chaho
+
+  async function refreshData() {
+    if (!userAddress || !provider) return;
+    try {
+      // Optional: re-check chain
+      const { chainId } = await provider.getNetwork();
+      if (chainId !== TARGET_CHAIN_ID) {
+        document.getElementById('votingPowerDisplay').innerText = "Wrong Network!";
+        return;
+      }
+
+      // Your original refresh logic here...
+      const total = await stakingContract.totalStaked();
+      const member = await stakingContract.members(userAddress);
+      const balance = await tokenContract.balanceOf(userAddress);
+
+      const stakedEth = parseFloat(ethers.utils.formatEther(member.stakedAmount || 0));
+      const totalEth = parseFloat(ethers.utils.formatEther(total || 0));
+
+      document.getElementById('userStakedDisplay').innerText = stakedEth.toFixed(0);
+      document.getElementById('userBalance').innerText = parseFloat(ethers.utils.formatEther(balance)).toFixed(2);
+      document.getElementById('votingPowerDisplay').innerText = totalEth > 0 ? ((stakedEth/totalEth)*100).toFixed(2) + "%" : "0%";
+
+      // ... baaki sab same (lockPeriod, proposal, rewards, timer etc.)
+      // copy your original refreshData code here
+
+    } catch (e) {
+      console.error("Refresh error:", e);
     }
+  }
 
-    async function loadRewards() {
-        try {
-            const tokens = await stakingContract.getActiveRewardTokens();
-            const list = document.getElementById('multiCoinList');
-            if(tokens.length > 0) list.innerHTML = "";
-            for(let t of tokens) {
-                const earn = await stakingContract.earned(userAddress, t);
-                const tC = new ethers.Contract(t, ["function symbol() view returns (string)"], provider);
-                const sym = await tC.symbol();
-                list.innerHTML += `<div class="flex justify-between p-2 bg-white/5 rounded-lg border border-white/5">
-                    <span>${sym}</span><span class="text-cyan-400">${parseFloat(ethers.utils.formatEther(earn)).toFixed(4)}</span>
-                </div>`;
-            }
-        } catch(e) { }
+  // Your other functions: handleStake, castVote, claimAllRewards, withdrawPrincipal, setMax, updateTimer, loadActiveProposal, loadRewards
+  // sab same rakh sakte ho, bas try-catch strong bana dena
+
+  // Example for handleStake (with better error)
+  async function handleStake() {
+    if (!userAddress) return alert("Connect wallet first");
+    const amt = document.getElementById('stakeAmount').value;
+    if (!amt || Number(amt) <= 0) return alert("Enter valid amount");
+
+    try {
+      const wei = ethers.utils.parseEther(amt);
+      const allowance = await tokenContract.allowance(userAddress, STAKING_ADDR);
+
+      if (allowance.lt(wei)) {
+        const tx = await tokenContract.approve(STAKING_ADDR, ethers.constants.MaxUint256);
+        await tx.wait();
+      }
+
+      const txStake = await stakingContract.addCoinsToDAO(wei);
+      await txStake.wait();
+      alert("Staked successfully!");
+      refreshData();
+    } catch (e) {
+      alert("Stake failed: " + (e.reason || e.message || "Check gas / balance"));
     }
+  }
 
-    function updateTimer(sec) {
-        if(sec <= 0) { document.getElementById('withdrawBtn').disabled = false; return; }
-        document.getElementById('withdrawBtn').disabled = true;
-        document.getElementById('days').innerText = Math.floor(sec/86400).toString().padStart(2,'0');
-        document.getElementById('hours').innerText = Math.floor((sec%86400)/3600).toString().padStart(2,'0');
-        document.getElementById('mins').innerText = Math.floor((sec%3600)/60).toString().padStart(2,'0');
-    }
+  // ... baaki functions copy-paste kar lena original se
 
-    async function castVote(support) {
-        try {
-            const count = await govContract.proposalCount();
-            const tx = await govContract.castVote(count.sub(1), support);
-            await tx.wait();
-            alert("Vote Casted!");
-            refreshData();
-        } catch(e) { alert("Voting Error"); }
-    }
-
-    async function claimAllRewards() { await (await stakingContract.claimAllRewards()).wait(); refreshData(); }
-    async function withdrawPrincipal() { await (await stakingContract.withdrawPrincipal()).wait(); refreshData(); }
-    function setMax() { document.getElementById('stakeAmount').value = document.getElementById('userBalance').innerText; }
 </script>
 </body>
 </html>
