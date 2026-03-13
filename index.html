@@ -118,19 +118,34 @@
   
   // ABI WITH PROPOSALS
   const DAO_ABI = [
-    "function totalStaked() view returns (uint256)",
-    "function members(address) view returns (uint256 stakedAmount, uint256 lockTimestamp)",
-    "function memberList(uint256) view returns (address)",
-    "function getActiveRewardTokens() view returns (address[])",
-    "function getPendingReward(address, address) view returns (uint256)",
-    "function addCoinsToDAO(uint256)",
-    "function claimAllRewards()",
-    "function withdrawPrincipal()",
-    "function getLockRemaining(address) view returns (uint256)",
-    "function proposals(uint256) view returns (address, string, string, uint256, bool, uint256, uint256, uint256)",
-    "function createProposal(string, string, string[])",
-    "function castVote(uint256, string)"
-  ];
+  // ---------------- only most important functions ----------------
+  
+  // Read functions
+  "function totalStaked() view returns (uint256)",
+  "function members(address) view returns (uint256 stakedAmount, uint256 lockTimestamp)",
+  "function asiaxToken() view returns (address)",
+  "function activeRewardTokens() view returns (address[])",
+  "function rewardTokenInfo(address) view returns (uint256 rewardRate, uint256 rewardPerTokenStored, uint256 lastUpdateTime)",
+  "function earned(address account, address rewardToken) view returns (uint256)",
+  "function proposals(uint256) view returns (address proposer, string title, string description, uint256 endTime, uint256 votesA, uint256 votesB, uint256 votesC, uint256 votesD, bool executed)",
+  "function hasVoted(uint256 proposalId, address user) view returns (bool)",
+  "function proposalCount() view returns (uint256)",
+
+  // Write functions
+  "function addCoinsToDAO(uint256 amount) nonReentrant",
+  "function withdrawPrincipal() nonReentrant",
+  "function claimAllRewards() nonReentrant",
+  "function createProposal(string title, string description) nonReentrant",
+  "function castVote(uint256 proposalId, string option) nonReentrant",
+  "function distributeRewards(address rewardTokenAddr, uint256 amount) nonReentrant", // onlyOwner
+
+  // Events (for listening)
+  "event Staked(address indexed user, uint256 amount)",
+  "event Withdrawn(address indexed user, uint256 amount)",
+  "event RewardPaid(address indexed user, address indexed rewardToken, uint256 amount)",
+  "event ProposalCreated(uint256 indexed proposalId, address proposer, string title)",
+  "event RewardsDistributed(address indexed rewardToken, uint256 amount)",
+];
 
   let provider, signer, daoContract, tokenContract, userAddress;
 
@@ -275,4 +290,5 @@
 </script>
 </body>
 </html>
+
 
