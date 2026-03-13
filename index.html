@@ -118,35 +118,304 @@
   
   // ABI WITH PROPOSALS
   const DAO_ABI = [
-  // ---------------- only most important functions ----------------
-  
-  // Read functions
-  "function totalStaked() view returns (uint256)",
-  "function members(address) view returns (uint256 stakedAmount, uint256 lockTimestamp)",
-  "function asiaxToken() view returns (address)",
-  "function activeRewardTokens() view returns (address[])",
-  "function rewardTokenInfo(address) view returns (uint256 rewardRate, uint256 rewardPerTokenStored, uint256 lastUpdateTime)",
-  "function earned(address account, address rewardToken) view returns (uint256)",
-  "function proposals(uint256) view returns (address proposer, string title, string description, uint256 endTime, uint256 votesA, uint256 votesB, uint256 votesC, uint256 votesD, bool executed)",
-  "function hasVoted(uint256 proposalId, address user) view returns (bool)",
-  "function proposalCount() view returns (uint256)",
-
-  // Write functions
-  "function addCoinsToDAO(uint256 amount) nonReentrant",
-  "function withdrawPrincipal() nonReentrant",
-  "function claimAllRewards() nonReentrant",
-  "function createProposal(string title, string description) nonReentrant",
-  "function castVote(uint256 proposalId, string option) nonReentrant",
-  "function distributeRewards(address rewardTokenAddr, uint256 amount) nonReentrant", // onlyOwner
-
-  // Events (for listening)
-  "event Staked(address indexed user, uint256 amount)",
-  "event Withdrawn(address indexed user, uint256 amount)",
-  "event RewardPaid(address indexed user, address indexed rewardToken, uint256 amount)",
-  "event ProposalCreated(uint256 indexed proposalId, address proposer, string title)",
-  "event RewardsDistributed(address indexed rewardToken, uint256 amount)",
+  {
+    "type": "constructor",
+    "inputs": [
+      { "name": "_asiaxToken", "type": "address", "internalType": "address" }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "name": "OwnableInvalidOwner",
+    "type": "error",
+    "inputs": [
+      { "name": "owner", "type": "address", "internalType": "address" }
+    ]
+  },
+  {
+    "name": "OwnableUnauthorizedAccount",
+    "type": "error",
+    "inputs": [
+      { "name": "account", "type": "address", "internalType": "address" }
+    ]
+  },
+  {
+    "name": "OwnershipTransferred",
+    "type": "event",
+    "inputs": [
+      { "name": "previousOwner", "type": "address", "indexed": true, "internalType": "address" },
+      { "name": "newOwner", "type": "address", "indexed": true, "internalType": "address" }
+    ],
+    "anonymous": false
+  },
+  {
+    "name": "ProposalCreated",
+    "type": "event",
+    "inputs": [
+      { "name": "proposalId", "type": "uint256", "indexed": true, "internalType": "uint256" },
+      { "name": "proposer", "type": "address", "indexed": false, "internalType": "address" },
+      { "name": "title", "type": "string", "indexed": false, "internalType": "string" }
+    ],
+    "anonymous": false
+  },
+  {
+    "name": "RewardPaid",
+    "type": "event",
+    "inputs": [
+      { "name": "user", "type": "address", "indexed": true, "internalType": "address" },
+      { "name": "rewardToken", "type": "address", "indexed": true, "internalType": "address" },
+      { "name": "amount", "type": "uint256", "indexed": false, "internalType": "uint256" }
+    ],
+    "anonymous": false
+  },
+  {
+    "name": "RewardsDistributed",
+    "type": "event",
+    "inputs": [
+      { "name": "rewardToken", "type": "address", "indexed": true, "internalType": "address" },
+      { "name": "amount", "type": "uint256", "indexed": false, "internalType": "uint256" }
+    ],
+    "anonymous": false
+  },
+  {
+    "name": "Staked",
+    "type": "event",
+    "inputs": [
+      { "name": "user", "type": "address", "indexed": true, "internalType": "address" },
+      { "name": "amount", "type": "uint256", "indexed": false, "internalType": "uint256" }
+    ],
+    "anonymous": false
+  },
+  {
+    "name": "Withdrawn",
+    "type": "event",
+    "inputs": [
+      { "name": "user", "type": "address", "indexed": true, "internalType": "address" },
+      { "name": "amount", "type": "uint256", "indexed": false, "internalType": "uint256" }
+    ],
+    "anonymous": false
+  },
+  {
+    "name": "LOCK_PERIOD",
+    "type": "function",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "QUORUM_PERCENT",
+    "type": "function",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "REWARD_DISTRIBUTION_PERIOD",
+    "type": "function",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "VOTING_PERIOD",
+    "type": "function",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "activeRewardTokens",
+    "type": "function",
+    "inputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "addCoinsToDAO",
+    "type": "function",
+    "inputs": [{ "name": "_amount", "type": "uint256", "internalType": "uint256" }],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "name": "asiaxToken",
+    "type": "function",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "address", "internalType": "contract IERC20" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "castVote",
+    "type": "function",
+    "inputs": [
+      { "name": "_proposalId", "type": "uint256", "internalType": "uint256" },
+      { "name": "_option", "type": "string", "internalType": "string" }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "name": "claimAllRewards",
+    "type": "function",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "name": "createProposal",
+    "type": "function",
+    "inputs": [
+      { "name": "_title", "type": "string", "internalType": "string" },
+      { "name": "_description", "type": "string", "internalType": "string" }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "name": "distributeRewards",
+    "type": "function",
+    "inputs": [
+      { "name": "rewardTokenAddr", "type": "address", "internalType": "address" },
+      { "name": "amount", "type": "uint256", "internalType": "uint256" }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "name": "earned",
+    "type": "function",
+    "inputs": [
+      { "name": "account", "type": "address", "internalType": "address" },
+      { "name": "rewardToken", "type": "address", "internalType": "address" }
+    ],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "executeProposal",
+    "type": "function",
+    "inputs": [{ "name": "_proposalId", "type": "uint256", "internalType": "uint256" }],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "name": "getActiveRewardTokens",
+    "type": "function",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "address[]", "internalType": "address[]" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "hasVoted",
+    "type": "function",
+    "inputs": [
+      { "name": "", "type": "uint256", "internalType": "uint256" },
+      { "name": "", "type": "address", "internalType": "address" }
+    ],
+    "outputs": [{ "name": "", "type": "bool", "internalType": "bool" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "members",
+    "type": "function",
+    "inputs": [{ "name": "", "type": "address", "internalType": "address" }],
+    "outputs": [
+      { "name": "stakedAmount", "type": "uint256", "internalType": "uint256" },
+      { "name": "lockTimestamp", "type": "uint256", "internalType": "uint256" }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "name": "owner",
+    "type": "function",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "proposalCount",
+    "type": "function",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "proposals",
+    "type": "function",
+    "inputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "outputs": [
+      { "name": "proposer", "type": "address", "internalType": "address" },
+      { "name": "title", "type": "string", "internalType": "string" },
+      { "name": "description", "type": "string", "internalType": "string" },
+      { "name": "endTime", "type": "uint256", "internalType": "uint256" },
+      { "name": "votesA", "type": "uint256", "internalType": "uint256" },
+      { "name": "votesB", "type": "uint256", "internalType": "uint256" },
+      { "name": "votesC", "type": "uint256", "internalType": "uint256" },
+      { "name": "votesD", "type": "uint256", "internalType": "uint256" },
+      { "name": "executed", "type": "bool", "internalType": "bool" }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "name": "renounceOwnership",
+    "type": "function",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "name": "rewardTokenInfo",
+    "type": "function",
+    "inputs": [{ "name": "", "type": "address", "internalType": "address" }],
+    "outputs": [
+      { "name": "rewardRate", "type": "uint256", "internalType": "uint256" },
+      { "name": "rewardPerTokenStored", "type": "uint256", "internalType": "uint256" },
+      { "name": "lastUpdateTime", "type": "uint256", "internalType": "uint256" }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "name": "rewards",
+    "type": "function",
+    "inputs": [
+      { "name": "", "type": "address", "internalType": "address" },
+      { "name": "", "type": "address", "internalType": "address" }
+    ],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "totalStaked",
+    "type": "function",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "transferOwnership",
+    "type": "function",
+    "inputs": [{ "name": "newOwner", "type": "address", "internalType": "address" }],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "name": "userRewardPerTokenPaid",
+    "type": "function",
+    "inputs": [
+      { "name": "", "type": "address", "internalType": "address" },
+      { "name": "", "type": "address", "internalType": "address" }
+    ],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "withdrawPrincipal",
+    "type": "function",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  }
 ];
-
   let provider, signer, daoContract, tokenContract, userAddress;
 
   async function connectWallet() {
@@ -290,5 +559,6 @@
 </script>
 </body>
 </html>
+
 
 
