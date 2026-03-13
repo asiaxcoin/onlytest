@@ -4,114 +4,102 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>AsiaX Pro • Master DAO</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-    body { background: linear-gradient(135deg, #0f001a 0%, #05000f 100%); color: #e0e0ff; font-family: 'Inter', sans-serif; min-height: 100vh; margin: 0; }
-    .glass { background: rgba(30, 20, 60, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(100, 100, 255, 0.15); border-radius: 1.5rem; }
-    .neon-border { box-shadow: 0 0 15px rgba(0, 255, 255, 0.1); }
-    .connect-btn { background: linear-gradient(90deg, #00d4ff, #7b00ff); box-shadow: 0 8px 20px rgba(0, 212, 255, 0.3); transition: all 0.3s ease; }
-    .vote-box { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1rem; transition: 0.3s; color: white; cursor: pointer; }
-    .vote-box:hover { background: rgba(0, 212, 255, 0.1); border-color: #00d4ff; color: #00d4ff; }
-    .action-input { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; outline: none; }
-    .dao-table-container { max-height: 400px; overflow-y: auto; }
-    .withdraw-btn { background: linear-gradient(90deg, #ff4b2b, #ff416c); transition: all 0.3s; }
-    .withdraw-btn:disabled { background: #333; cursor: not-allowed; opacity: 0.5; }
+    body { background: linear-gradient(135deg, #0f001a 0%, #05000f 100%); color: #e0e0ff; font-family: 'Inter', sans-serif; min-height: 100vh; margin: 0; -webkit-tap-highlight-color: transparent; }
+    .glass { background: rgba(30, 20, 60, 0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(100, 100, 255, 0.15); border-radius: 1.25rem; }
+    .connect-btn { background: linear-gradient(90deg, #00d4ff, #7b00ff); box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3); }
+    .vote-box { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1rem; transition: 0.2s; color: white; }
+    .vote-box:active { transform: scale(0.95); background: rgba(0, 212, 255, 0.1); }
+    .action-input { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; outline: none; -webkit-appearance: none; }
+    .withdraw-btn { background: linear-gradient(90deg, #ff4b2b, #ff416c); }
+    .withdraw-btn:disabled { opacity: 0.3; filter: grayscale(1); }
   </style>
 </head>
-<body class="antialiased p-4 sm:p-6">
+<body class="antialiased p-3">
 
-<div class="max-w-2xl mx-auto px-2 sm:px-4 py-6 sm:py-8">
-  <div class="flex justify-between items-center mb-10">
-    <div class="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">ASIAX DAO</div>
-    <button id="connectBtn" class="connect-btn text-white text-sm font-bold px-5 py-2.5 rounded-full flex items-center gap-2" onclick="connectWallet()">
-      <i class="fa-solid fa-wallet"></i> <span id="walletText">Connect Wallet</span>
+<div class="max-w-xl mx-auto space-y-6 pt-4">
+  <div class="flex justify-between items-center px-1">
+    <div class="text-xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">ASIAX DAO</div>
+    <button id="connectBtn" class="connect-btn text-white text-xs font-bold px-4 py-2 rounded-full flex items-center gap-2" onclick="connectWallet()">
+      <i class="fa-solid fa-wallet"></i> <span id="walletText">Connect</span>
     </button>
   </div>
 
-  <div class="grid grid-cols-3 gap-3 mb-8 text-center">
-    <div class="glass p-4 border-b-2 border-purple-600/50">
-      <div class="text-[10px] text-gray-400 uppercase">Voting Power</div>
-      <div class="text-xl font-bold" id="votingPowerDisplay">0.00%</div>
+  <div class="grid grid-cols-3 gap-2">
+    <div class="glass p-3 text-center border-b-2 border-cyan-500/50">
+      <div class="text-[9px] text-gray-400 uppercase">Voting</div>
+      <div class="text-sm font-bold" id="votingPowerDisplay">0%</div>
     </div>
-    <div class="glass p-4 border-b-2 border-purple-600/50">
-      <div class="text-[10px] text-gray-400 uppercase">My Staked</div>
-      <div class="text-xl font-bold" id="userStakedDisplay">0</div>
+    <div class="glass p-3 text-center border-b-2 border-purple-500/50">
+      <div class="text-[9px] text-gray-400 uppercase">Staked</div>
+      <div class="text-sm font-bold" id="userStakedDisplay">0</div>
     </div>
-    <div class="glass p-4 border-b-2 border-purple-600/50">
-      <div class="text-[10px] text-gray-400 uppercase">Badge</div>
-      <div class="text-sm font-bold text-cyan-400" id="badgeDisplay">MEMBER 🐟</div>
-    </div>
-  </div>
-
-  <div class="glass p-6 mb-10 border border-white/10">
-    <h2 class="text-sm font-bold text-cyan-400 uppercase tracking-widest mb-4"><i class="fa-solid fa-plus-circle mr-2"></i>Create New Proposal</h2>
-    <div class="space-y-3">
-        <input type="text" id="propTitle" placeholder="What is your proposal?" class="action-input w-full p-3 rounded-xl text-sm" />
-        <button onclick="handleCreateProposal()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl text-sm transition">Submit Proposal to DAO</button>
+    <div class="glass p-3 text-center border-b-2 border-cyan-500/50">
+      <div class="text-[9px] text-gray-400 uppercase">Badge</div>
+      <div class="text-[10px] font-bold text-cyan-400" id="badgeDisplay">VISITOR</div>
     </div>
   </div>
 
-  <div id="activeProposalSection" class="mb-10 text-center">
-    <div class="text-xs text-cyan-400 font-bold uppercase tracking-[0.25em] mb-4">Live Governance Voting</div>
-    <div class="glass p-6 mb-4">
-        <h3 id="displayPropTitle" class="text-lg font-bold mb-2">No Active Proposal</h3>
-        <p id="displayPropDesc" class="text-sm text-gray-400 mb-6 italic">Latest DAO proposal will appear here</p>
-
-        <div class="grid grid-cols-2 gap-3 mb-6">
-            <button onclick="castVote(true)" class="vote-box py-4 text-xl font-bold">YES <span id="resA" class="block text-[10px] text-gray-500">0%</span></button>
-            <button onclick="castVote(false)" class="vote-box py-4 text-xl font-bold">NO <span id="resB" class="block text-[10px] text-gray-500">0%</span></button>
+  <div class="glass p-5 border border-white/5">
+    <h2 class="text-xs font-bold text-cyan-400 uppercase mb-4 tracking-wider">Governance Vote</h2>
+    <div class="text-center">
+        <h3 id="displayPropTitle" class="text-md font-bold mb-1">No Active Proposal</h3>
+        <p id="displayPropDesc" class="text-[11px] text-gray-400 mb-4">Connect wallet to view</p>
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="castVote(true)" class="vote-box py-3 text-sm font-bold">YES <span id="resA" class="block text-[9px] text-gray-500">0%</span></button>
+            <button onclick="castVote(false)" class="vote-box py-3 text-sm font-bold">NO <span id="resB" class="block text-[9px] text-gray-500">0%</span></button>
         </div>
     </div>
   </div>
 
-  <div class="glass neon-border overflow-hidden mb-10 p-5">
-    <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-3">
-        <span class="font-bold text-cyan-400 text-sm"><i class="fa-solid fa-coins mr-2"></i>My Unclaimed Rewards</span>
-        <button onclick="claimAllRewards()" class="bg-cyan-500 text-black text-[10px] font-bold px-3 py-1 rounded-md uppercase">Claim All</button>
+  <div class="glass p-5">
+    <div class="flex justify-between items-center mb-4">
+        <span class="font-bold text-cyan-400 text-xs">Unclaimed Rewards</span>
+        <button onclick="claimAllRewards()" class="bg-cyan-500 text-black text-[9px] font-bold px-3 py-1 rounded uppercase">Claim All</button>
     </div>
-    <div id="multiCoinList" class="space-y-3">
-        <div class="text-xs text-gray-500 italic">No active rewards found</div>
-    </div>
+    <div id="multiCoinList" class="space-y-2 text-xs text-gray-500 italic">Connect wallet to see rewards</div>
   </div>
 
-  <div class="glass p-6 neon-border mb-8">
-    <div class="flex flex-col sm:flex-row justify-between mb-6">
-      <h2 class="text-lg font-bold text-white">Stake AsiaX</h2>
-      <div class="text-sm text-cyan-300">In Wallet: <span id="userBalance">0.00</span></div>
+  <div class="glass p-5 border border-purple-500/20">
+    <div class="flex justify-between mb-4">
+      <h2 class="text-md font-bold">Stake AsiaX</h2>
+      <div class="text-[10px] text-cyan-300">Balance: <span id="userBalance">0.00</span></div>
     </div>
     <div class="relative mb-4">
-      <input type="number" id="stakeAmount" placeholder="Amount to stake" class="action-input w-full p-4 rounded-xl" />
-      <button onclick="setMax()" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-cyan-300">MAX</button>
+      <input type="number" id="stakeAmount" placeholder="0.0" class="action-input w-full p-3 rounded-xl text-sm" />
+      <button onclick="setMax()" class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-cyan-300 font-bold">MAX</button>
     </div>
-    <button id="stakeBtn" onclick="handleStake()" class="connect-btn w-full text-white font-bold py-4 rounded-xl">Join / Upgrade Rank</button>
+    <button id="stakeBtn" onclick="handleStake()" class="connect-btn w-full text-white font-bold py-3 rounded-xl text-sm">Join DAO</button>
   </div>
 
-  <div class="glass p-6 border border-red-500/30">
-    <div class="text-xs text-center text-gray-400 mb-4 uppercase">Lock Period Status</div>
-    <div class="flex justify-between items-center mb-6">
-        <div class="timer-box flex-1 text-center"><div id="days" class="text-xl font-bold">00</div><div class="text-[10px]">Days</div></div>
-        <div class="timer-box flex-1 text-center"><div id="hours" class="text-xl font-bold">00</div><div class="text-[10px]">Hrs</div></div>
-        <div class="timer-box flex-1 text-center"><div id="mins" class="text-xl font-bold">00</div><div class="text-[10px]">Mins</div></div>
+  <div class="glass p-5 border border-red-500/20">
+    <div class="flex justify-between items-center mb-4 px-2">
+        <div class="text-center"><div id="days" class="text-lg font-bold">00</div><div class="text-[9px] uppercase">Days</div></div>
+        <div class="text-center text-gray-600">:</div>
+        <div class="text-center"><div id="hours" class="text-lg font-bold">00</div><div class="text-[9px] uppercase">Hrs</div></div>
+        <div class="text-center text-gray-600">:</div>
+        <div class="text-center"><div id="mins" class="text-lg font-bold">00</div><div class="text-[9px] uppercase">Mins</div></div>
     </div>
-    <button id="withdrawBtn" disabled onclick="withdrawPrincipal()" class="withdraw-btn w-full text-white font-bold py-4 rounded-xl uppercase">Withdraw Principal</button>
+    <button id="withdrawBtn" disabled onclick="withdrawPrincipal()" class="withdraw-btn w-full text-white font-bold py-3 rounded-xl text-xs uppercase">Withdraw Principal</button>
   </div>
 </div>
 
 <script>
+
   // --- CONFIGURATION: Apne addresses yahan dalein ---
   const STAKING_ADDR = "0x23E12941383c7de11D8ab066Ba96897535DD3e48";
   const GOV_ADDR = "0x074fF1363A23EE4142963bD34e4f88F7552C2ea1";
   const TOKEN_ADDR = "0x80675dCe080d52dD842e93bF3bc15E28dACD78CB";
 
-  // ABIs
+  // ABI v5 Style
   const STAKING_ABI = [
     "function totalStaked() view returns (uint256)",
     "function members(address) view returns (uint256 stakedAmount, uint256 lockTimestamp)",
     "function LOCK_PERIOD() view returns (uint256)",
-    "function activeRewardTokens(uint256) view returns (address)",
     "function getActiveRewardTokens() view returns (address[])",
     "function earned(address, address) view returns (uint256)",
     "function addCoinsToDAO(uint256)",
@@ -121,7 +109,6 @@
   const GOV_ABI = [
     "function proposalCount() view returns (uint256)",
     "function proposals(uint256) view returns (address, string, uint256, uint256, uint256, bool)",
-    "function createProposal(string)",
     "function castVote(uint256, bool)"
   ];
   const TOKEN_ABI = [
@@ -134,19 +121,23 @@
   let provider, signer, stakingContract, govContract, tokenContract, userAddress;
 
   async function connectWallet() {
-    if (!window.ethereum) return alert("Please install MetaMask");
-    provider = new ethers.BrowserProvider(window.ethereum);
-    const accounts = await provider.send("eth_requestAccounts", []);
-    userAddress = accounts[0];
-    signer = await provider.getSigner();
+    try {
+        if (!window.ethereum) return alert("Open in MetaMask Browser");
+        
+        // Ethers v5 Provider
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        
+        signer = provider.getSigner();
+        userAddress = await signer.getAddress();
 
-    stakingContract = new ethers.Contract(STAKING_ADDR, STAKING_ABI, signer);
-    govContract = new ethers.Contract(GOV_ADDR, GOV_ABI, signer);
-    tokenContract = new ethers.Contract(TOKEN_ADDR, TOKEN_ABI, signer);
+        stakingContract = new ethers.Contract(STAKING_ADDR, STAKING_ABI, signer);
+        govContract = new ethers.Contract(GOV_ADDR, GOV_ABI, signer);
+        tokenContract = new ethers.Contract(TOKEN_ADDR, TOKEN_ABI, signer);
 
-    document.getElementById('walletText').innerText = userAddress.slice(0,6)+"..."+userAddress.slice(-4);
-    refreshData();
-    setInterval(refreshData, 30000); // Auto refresh every 30s
+        document.getElementById('walletText').innerText = userAddress.slice(0,6)+"...";
+        refreshData();
+    } catch (e) { alert("Connection Error: " + e.message); }
   }
 
   async function refreshData() {
@@ -156,82 +147,48 @@
         const member = await stakingContract.members(userAddress);
         const balance = await tokenContract.balanceOf(userAddress);
 
-        const stakedWei = member[0]; 
-        const stakedEth = parseFloat(ethers.formatEther(stakedWei));
-        const totalEth = parseFloat(ethers.formatEther(total));
+        const stakedEth = parseFloat(ethers.utils.formatEther(member.stakedAmount));
+        const totalEth = parseFloat(ethers.utils.formatEther(total));
 
-        // Update Stats
         document.getElementById('userStakedDisplay').innerText = stakedEth.toFixed(0);
-        document.getElementById('userBalance').innerText = parseFloat(ethers.formatEther(balance)).toFixed(2);
+        document.getElementById('userBalance').innerText = parseFloat(ethers.utils.formatEther(balance)).toFixed(2);
         document.getElementById('votingPowerDisplay').innerText = totalEth > 0 ? ((stakedEth/totalEth)*100).toFixed(2) + "%" : "0%";
 
-        // Timer Logic
         const lockPeriod = await stakingContract.LOCK_PERIOD();
-        const unlockTime = Number(member[1]) + Number(lockPeriod);
+        const unlockTime = Number(member.lockTimestamp) + Number(lockPeriod);
         const remaining = unlockTime - Math.floor(Date.now()/1000);
         updateTimer(remaining > 0 && stakedEth > 0 ? remaining : 0);
 
-        loadActiveProposal(totalEth);
+        loadActiveProposal();
         loadRewards();
-    } catch(e) { console.error(e); }
-  }
-
-  async function loadActiveProposal(totalStaked) {
-    try {
-        const count = await govContract.proposalCount();
-        if(count == 0) return;
-        
-        const p = await govContract.proposals(Number(count) - 1);
-        document.getElementById('displayPropTitle').innerText = p[1];
-        document.getElementById('displayPropDesc').innerText = "Live Proposal #" + count;
-
-        const vA = parseFloat(ethers.formatEther(p[3]));
-        const vB = parseFloat(ethers.formatEther(p[4]));
-        const totalVotes = vA + vB;
-
-        if(totalVotes > 0) {
-            document.getElementById('resA').innerText = ((vA/totalVotes)*100).toFixed(0) + "%";
-            document.getElementById('resB').innerText = ((vB/totalVotes)*100).toFixed(0) + "%";
-        }
-    } catch(e) { console.log("Proposal error"); }
-  }
-
-  async function handleCreateProposal() {
-    const title = document.getElementById('propTitle').value;
-    if(!title) return alert("Enter title");
-    try {
-        const tx = await govContract.createProposal(title);
-        await tx.wait();
-        alert("Proposal Submitted!");
-        refreshData();
-    } catch(e) { alert("Action Failed: Stake required"); }
-  }
-
-  async function castVote(support) {
-    try {
-        const count = await govContract.proposalCount();
-        const tx = await govContract.castVote(Number(count)-1, support);
-        await tx.wait();
-        alert("Vote Recorded!");
-        refreshData();
-    } catch(e) { alert("Voting Failed"); }
+    } catch(e) { console.error("Refresh Error:", e); }
   }
 
   async function handleStake() {
     const amt = document.getElementById('stakeAmount').value;
-    if(!amt || amt <= 0) return;
-    const wei = ethers.parseEther(amt);
+    if(!amt || amt <= 0) return alert("Enter amount");
+    const wei = ethers.utils.parseEther(amt);
     try {
         const allowance = await tokenContract.allowance(userAddress, STAKING_ADDR);
-        if(allowance < wei) {
-            const txApp = await tokenContract.approve(STAKING_ADDR, ethers.MaxUint256);
+        if(allowance.lt(wei)) {
+            const txApp = await tokenContract.approve(STAKING_ADDR, ethers.constants.MaxUint256);
             await txApp.wait();
         }
         const txStake = await stakingContract.addCoinsToDAO(wei);
         await txStake.wait();
         alert("Staked!");
         refreshData();
-    } catch(e) { alert("Stake Failed"); }
+    } catch(e) { alert("Stake Fail: Check MATIC or Allowance"); }
+  }
+
+  async function loadActiveProposal() {
+    try {
+        const count = await govContract.proposalCount();
+        if(count == 0) return;
+        const p = await govContract.proposals(count.sub(1));
+        document.getElementById('displayPropTitle').innerText = p[1];
+        document.getElementById('displayPropDesc').innerText = "VOTING ACTIVE";
+    } catch(e) { }
   }
 
   async function loadRewards() {
@@ -239,30 +196,33 @@
         const tokens = await stakingContract.getActiveRewardTokens();
         const list = document.getElementById('multiCoinList');
         if(tokens.length > 0) list.innerHTML = "";
-        
-        for(let tAddr of tokens) {
-            const earned = await stakingContract.earned(userAddress, tAddr);
-            const tContract = new ethers.Contract(tAddr, ["function symbol() view returns (string)"], provider);
-            const symbol = await tContract.symbol();
-            
-            list.innerHTML += `
-                <div class="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/10">
-                    <span class="text-sm font-bold">${symbol}</span>
-                    <span class="text-xs text-cyan-400">${parseFloat(ethers.formatEther(earned)).toFixed(4)}</span>
-                </div>`;
+        for(let t of tokens) {
+            const earn = await stakingContract.earned(userAddress, t);
+            const tC = new ethers.Contract(t, ["function symbol() view returns (string)"], provider);
+            const sym = await tC.symbol();
+            list.innerHTML += `<div class="flex justify-between p-2 bg-white/5 rounded-lg mb-1">
+                <span>${sym}</span><span class="text-cyan-400">${parseFloat(ethers.utils.formatEther(earn)).toFixed(4)}</span>
+            </div>`;
         }
     } catch(e) { }
   }
 
   function updateTimer(sec) {
-    if(sec <= 0) {
-        document.getElementById('withdrawBtn').disabled = false;
-        return;
-    }
+    if(sec <= 0) { document.getElementById('withdrawBtn').disabled = false; return; }
     document.getElementById('withdrawBtn').disabled = true;
-    document.getElementById('days').innerText = Math.floor(sec/(24*3600)).toString().padStart(2,'0');
-    document.getElementById('hours').innerText = Math.floor((sec%(24*3600))/3600).toString().padStart(2,'0');
+    document.getElementById('days').innerText = Math.floor(sec/86400).toString().padStart(2,'0');
+    document.getElementById('hours').innerText = Math.floor((sec%86400)/3600).toString().padStart(2,'0');
     document.getElementById('mins').innerText = Math.floor((sec%3600)/60).toString().padStart(2,'0');
+  }
+
+  async function castVote(support) {
+    try {
+        const count = await govContract.proposalCount();
+        const tx = await govContract.castVote(count.sub(1), support);
+        await tx.wait();
+        alert("Voted!");
+        refreshData();
+    } catch(e) { alert("Already voted or error"); }
   }
 
   async function claimAllRewards() { try { await (await stakingContract.claimAllRewards()).wait(); refreshData(); } catch(e){} }
