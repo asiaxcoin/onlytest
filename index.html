@@ -18,6 +18,7 @@
     .action-input { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; outline: none; }
     .dao-table-container { max-height: 400px; overflow-y: auto; }
     .withdraw-btn { background: linear-gradient(90deg, #ff4b2b, #ff416c); transition: all 0.3s; }
+    .withdraw-btn:disabled { background: #333; cursor: not-allowed; opacity: 0.5; }
   </style>
 </head>
 <body class="antialiased p-4 sm:p-6">
@@ -36,20 +37,19 @@
       <div class="text-xl font-bold" id="votingPowerDisplay">0.00%</div>
     </div>
     <div class="glass p-4 border-b-2 border-purple-600/50">
-      <div class="text-[10px] text-gray-400 uppercase">My Rank</div>
-      <div class="text-xl font-bold" id="userRankDisplay">--</div>
+      <div class="text-[10px] text-gray-400 uppercase">My Staked</div>
+      <div class="text-xl font-bold" id="userStakedDisplay">0</div>
     </div>
     <div class="glass p-4 border-b-2 border-purple-600/50">
       <div class="text-[10px] text-gray-400 uppercase">Badge</div>
-      <div class="text-sm font-bold text-cyan-400" id="badgeDisplay">VISITOR 🐟</div>
+      <div class="text-sm font-bold text-cyan-400" id="badgeDisplay">MEMBER 🐟</div>
     </div>
   </div>
 
   <div class="glass p-6 mb-10 border border-white/10">
     <h2 class="text-sm font-bold text-cyan-400 uppercase tracking-widest mb-4"><i class="fa-solid fa-plus-circle mr-2"></i>Create New Proposal</h2>
     <div class="space-y-3">
-        <input type="text" id="propTitle" placeholder="Proposal Title" class="action-input w-full p-3 rounded-xl text-sm" />
-        <textarea id="propDesc" placeholder="Describe your proposal..." class="action-input w-full p-3 rounded-xl text-sm h-20"></textarea>
+        <input type="text" id="propTitle" placeholder="What is your proposal?" class="action-input w-full p-3 rounded-xl text-sm" />
         <button onclick="handleCreateProposal()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl text-sm transition">Submit Proposal to DAO</button>
     </div>
   </div>
@@ -58,13 +58,11 @@
     <div class="text-xs text-cyan-400 font-bold uppercase tracking-[0.25em] mb-4">Live Governance Voting</div>
     <div class="glass p-6 mb-4">
         <h3 id="displayPropTitle" class="text-lg font-bold mb-2">No Active Proposal</h3>
-        <p id="displayPropDesc" class="text-sm text-gray-400 mb-6 italic">Connect wallet to load active DAO questions</p>
-        
+        <p id="displayPropDesc" class="text-sm text-gray-400 mb-6 italic">Latest DAO proposal will appear here</p>
+
         <div class="grid grid-cols-2 gap-3 mb-6">
-            <button onclick="castVote('A')" class="vote-box py-4 text-xl font-bold">A <span id="resA" class="block text-[10px] text-gray-500">0%</span></button>
-            <button onclick="castVote('B')" class="vote-box py-4 text-xl font-bold">B <span id="resB" class="block text-[10px] text-gray-500">0%</span></button>
-            <button onclick="castVote('C')" class="vote-box py-4 text-xl font-bold">C <span id="resC" class="block text-[10px] text-gray-500">0%</span></button>
-            <button onclick="castVote('D')" class="vote-box py-4 text-xl font-bold">D <span id="resD" class="block text-[10px] text-gray-500">0%</span></button>
+            <button onclick="castVote(true)" class="vote-box py-4 text-xl font-bold">YES <span id="resA" class="block text-[10px] text-gray-500">0%</span></button>
+            <button onclick="castVote(false)" class="vote-box py-4 text-xl font-bold">NO <span id="resB" class="block text-[10px] text-gray-500">0%</span></button>
         </div>
     </div>
   </div>
@@ -74,25 +72,15 @@
         <span class="font-bold text-cyan-400 text-sm"><i class="fa-solid fa-coins mr-2"></i>My Unclaimed Rewards</span>
         <button onclick="claimAllRewards()" class="bg-cyan-500 text-black text-[10px] font-bold px-3 py-1 rounded-md uppercase">Claim All</button>
     </div>
-    <div id="multiCoinList" class="space-y-3"></div>
-  </div>
-
-  <div class="text-xs text-gray-500 text-center mb-4 uppercase tracking-widest">Top Governance Token Holders</div>
-  <div class="glass neon-border overflow-hidden mb-10">
-    <div class="dao-table-container">
-      <table class="w-full text-left text-sm">
-        <thead class="text-gray-400 uppercase text-[10px] border-b border-white/5 sticky top-0 bg-[#160d2b]">
-          <tr><th class="p-4">Rank</th><th class="p-4">Wallet</th><th class="p-4 text-right">Staked</th></tr>
-        </thead>
-        <tbody id="daoList"></tbody>
-      </table>
+    <div id="multiCoinList" class="space-y-3">
+        <div class="text-xs text-gray-500 italic">No active rewards found</div>
     </div>
   </div>
 
   <div class="glass p-6 neon-border mb-8">
     <div class="flex flex-col sm:flex-row justify-between mb-6">
       <h2 class="text-lg font-bold text-white">Stake AsiaX</h2>
-      <div class="text-sm text-cyan-300">Wallet: <span id="userBalance">0.00</span></div>
+      <div class="text-sm text-cyan-300">In Wallet: <span id="userBalance">0.00</span></div>
     </div>
     <div class="relative mb-4">
       <input type="number" id="stakeAmount" placeholder="Amount to stake" class="action-input w-full p-4 rounded-xl" />
@@ -102,463 +90,184 @@
   </div>
 
   <div class="glass p-6 border border-red-500/30">
+    <div class="text-xs text-center text-gray-400 mb-4 uppercase">Lock Period Status</div>
     <div class="flex justify-between items-center mb-6">
-        <div class="timer-box"><div id="days" class="text-xl font-bold">00</div><div class="text-[10px]">Days</div></div>
-        <div class="timer-box"><div id="hours" class="text-xl font-bold">00</div><div class="text-[10px]">Hrs</div></div>
-        <div class="timer-box"><div id="mins" class="text-xl font-bold">00</div><div class="text-[10px]">Mins</div></div>
+        <div class="timer-box flex-1 text-center"><div id="days" class="text-xl font-bold">00</div><div class="text-[10px]">Days</div></div>
+        <div class="timer-box flex-1 text-center"><div id="hours" class="text-xl font-bold">00</div><div class="text-[10px]">Hrs</div></div>
+        <div class="timer-box flex-1 text-center"><div id="mins" class="text-xl font-bold">00</div><div class="text-[10px]">Mins</div></div>
     </div>
     <button id="withdrawBtn" disabled onclick="withdrawPrincipal()" class="withdraw-btn w-full text-white font-bold py-4 rounded-xl uppercase">Withdraw Principal</button>
   </div>
 </div>
 
 <script>
-  // CONFIGURATION
-  const DAO_ADDRESS = "0x9AD8D183A0d020a47992DAa20D6bfaEa937b5976";
-  const TOKEN_ADDRESS = "0x80675dCe080d52dD842e93bF3bc15E28dACD78CB";
-  
-  // ABI WITH PROPOSALS
-  const DAO_ABI = [
-  {
-    "type": "constructor",
-    "inputs": [
-      { "name": "_asiaxToken", "type": "address", "internalType": "address" }
-    ],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "name": "OwnableInvalidOwner",
-    "type": "error",
-    "inputs": [
-      { "name": "owner", "type": "address", "internalType": "address" }
-    ]
-  },
-  {
-    "name": "OwnableUnauthorizedAccount",
-    "type": "error",
-    "inputs": [
-      { "name": "account", "type": "address", "internalType": "address" }
-    ]
-  },
-  {
-    "name": "OwnershipTransferred",
-    "type": "event",
-    "inputs": [
-      { "name": "previousOwner", "type": "address", "indexed": true, "internalType": "address" },
-      { "name": "newOwner", "type": "address", "indexed": true, "internalType": "address" }
-    ],
-    "anonymous": false
-  },
-  {
-    "name": "ProposalCreated",
-    "type": "event",
-    "inputs": [
-      { "name": "proposalId", "type": "uint256", "indexed": true, "internalType": "uint256" },
-      { "name": "proposer", "type": "address", "indexed": false, "internalType": "address" },
-      { "name": "title", "type": "string", "indexed": false, "internalType": "string" }
-    ],
-    "anonymous": false
-  },
-  {
-    "name": "RewardPaid",
-    "type": "event",
-    "inputs": [
-      { "name": "user", "type": "address", "indexed": true, "internalType": "address" },
-      { "name": "rewardToken", "type": "address", "indexed": true, "internalType": "address" },
-      { "name": "amount", "type": "uint256", "indexed": false, "internalType": "uint256" }
-    ],
-    "anonymous": false
-  },
-  {
-    "name": "RewardsDistributed",
-    "type": "event",
-    "inputs": [
-      { "name": "rewardToken", "type": "address", "indexed": true, "internalType": "address" },
-      { "name": "amount", "type": "uint256", "indexed": false, "internalType": "uint256" }
-    ],
-    "anonymous": false
-  },
-  {
-    "name": "Staked",
-    "type": "event",
-    "inputs": [
-      { "name": "user", "type": "address", "indexed": true, "internalType": "address" },
-      { "name": "amount", "type": "uint256", "indexed": false, "internalType": "uint256" }
-    ],
-    "anonymous": false
-  },
-  {
-    "name": "Withdrawn",
-    "type": "event",
-    "inputs": [
-      { "name": "user", "type": "address", "indexed": true, "internalType": "address" },
-      { "name": "amount", "type": "uint256", "indexed": false, "internalType": "uint256" }
-    ],
-    "anonymous": false
-  },
-  {
-    "name": "LOCK_PERIOD",
-    "type": "function",
-    "inputs": [],
-    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
-    "stateMutability": "view"
-  },
-  {
-    "name": "QUORUM_PERCENT",
-    "type": "function",
-    "inputs": [],
-    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
-    "stateMutability": "view"
-  },
-  {
-    "name": "REWARD_DISTRIBUTION_PERIOD",
-    "type": "function",
-    "inputs": [],
-    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
-    "stateMutability": "view"
-  },
-  {
-    "name": "VOTING_PERIOD",
-    "type": "function",
-    "inputs": [],
-    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
-    "stateMutability": "view"
-  },
-  {
-    "name": "activeRewardTokens",
-    "type": "function",
-    "inputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
-    "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
-    "stateMutability": "view"
-  },
-  {
-    "name": "addCoinsToDAO",
-    "type": "function",
-    "inputs": [{ "name": "_amount", "type": "uint256", "internalType": "uint256" }],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "name": "asiaxToken",
-    "type": "function",
-    "inputs": [],
-    "outputs": [{ "name": "", "type": "address", "internalType": "contract IERC20" }],
-    "stateMutability": "view"
-  },
-  {
-    "name": "castVote",
-    "type": "function",
-    "inputs": [
-      { "name": "_proposalId", "type": "uint256", "internalType": "uint256" },
-      { "name": "_option", "type": "string", "internalType": "string" }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "name": "claimAllRewards",
-    "type": "function",
-    "inputs": [],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "name": "createProposal",
-    "type": "function",
-    "inputs": [
-      { "name": "_title", "type": "string", "internalType": "string" },
-      { "name": "_description", "type": "string", "internalType": "string" }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "name": "distributeRewards",
-    "type": "function",
-    "inputs": [
-      { "name": "rewardTokenAddr", "type": "address", "internalType": "address" },
-      { "name": "amount", "type": "uint256", "internalType": "uint256" }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "name": "earned",
-    "type": "function",
-    "inputs": [
-      { "name": "account", "type": "address", "internalType": "address" },
-      { "name": "rewardToken", "type": "address", "internalType": "address" }
-    ],
-    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
-    "stateMutability": "view"
-  },
-  {
-    "name": "executeProposal",
-    "type": "function",
-    "inputs": [{ "name": "_proposalId", "type": "uint256", "internalType": "uint256" }],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "name": "getActiveRewardTokens",
-    "type": "function",
-    "inputs": [],
-    "outputs": [{ "name": "", "type": "address[]", "internalType": "address[]" }],
-    "stateMutability": "view"
-  },
-  {
-    "name": "hasVoted",
-    "type": "function",
-    "inputs": [
-      { "name": "", "type": "uint256", "internalType": "uint256" },
-      { "name": "", "type": "address", "internalType": "address" }
-    ],
-    "outputs": [{ "name": "", "type": "bool", "internalType": "bool" }],
-    "stateMutability": "view"
-  },
-  {
-    "name": "members",
-    "type": "function",
-    "inputs": [{ "name": "", "type": "address", "internalType": "address" }],
-    "outputs": [
-      { "name": "stakedAmount", "type": "uint256", "internalType": "uint256" },
-      { "name": "lockTimestamp", "type": "uint256", "internalType": "uint256" }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "name": "owner",
-    "type": "function",
-    "inputs": [],
-    "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
-    "stateMutability": "view"
-  },
-  {
-    "name": "proposalCount",
-    "type": "function",
-    "inputs": [],
-    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
-    "stateMutability": "view"
-  },
-  {
-    "name": "proposals",
-    "type": "function",
-    "inputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
-    "outputs": [
-      { "name": "proposer", "type": "address", "internalType": "address" },
-      { "name": "title", "type": "string", "internalType": "string" },
-      { "name": "description", "type": "string", "internalType": "string" },
-      { "name": "endTime", "type": "uint256", "internalType": "uint256" },
-      { "name": "votesA", "type": "uint256", "internalType": "uint256" },
-      { "name": "votesB", "type": "uint256", "internalType": "uint256" },
-      { "name": "votesC", "type": "uint256", "internalType": "uint256" },
-      { "name": "votesD", "type": "uint256", "internalType": "uint256" },
-      { "name": "executed", "type": "bool", "internalType": "bool" }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "name": "renounceOwnership",
-    "type": "function",
-    "inputs": [],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "name": "rewardTokenInfo",
-    "type": "function",
-    "inputs": [{ "name": "", "type": "address", "internalType": "address" }],
-    "outputs": [
-      { "name": "rewardRate", "type": "uint256", "internalType": "uint256" },
-      { "name": "rewardPerTokenStored", "type": "uint256", "internalType": "uint256" },
-      { "name": "lastUpdateTime", "type": "uint256", "internalType": "uint256" }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "name": "rewards",
-    "type": "function",
-    "inputs": [
-      { "name": "", "type": "address", "internalType": "address" },
-      { "name": "", "type": "address", "internalType": "address" }
-    ],
-    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
-    "stateMutability": "view"
-  },
-  {
-    "name": "totalStaked",
-    "type": "function",
-    "inputs": [],
-    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
-    "stateMutability": "view"
-  },
-  {
-    "name": "transferOwnership",
-    "type": "function",
-    "inputs": [{ "name": "newOwner", "type": "address", "internalType": "address" }],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "name": "userRewardPerTokenPaid",
-    "type": "function",
-    "inputs": [
-      { "name": "", "type": "address", "internalType": "address" },
-      { "name": "", "type": "address", "internalType": "address" }
-    ],
-    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
-    "stateMutability": "view"
-  },
-  {
-    "name": "withdrawPrincipal",
-    "type": "function",
-    "inputs": [],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  }
-];
-  let provider, signer, daoContract, tokenContract, userAddress;
+  // --- CONFIGURATION: Apne addresses yahan dalein ---
+  const STAKING_ADDR = "0x23E12941383c7de11D8ab066Ba96897535DD3e48";
+  const GOV_ADDR = "0x074fF1363A23EE4142963bD34e4f88F7552C2ea1";
+  const TOKEN_ADDR = "0x80675dCe080d52dD842e93bF3bc15E28dACD78CB";
+
+  // ABIs
+  const STAKING_ABI = [
+    "function totalStaked() view returns (uint256)",
+    "function members(address) view returns (uint256 stakedAmount, uint256 lockTimestamp)",
+    "function LOCK_PERIOD() view returns (uint256)",
+    "function activeRewardTokens(uint256) view returns (address)",
+    "function getActiveRewardTokens() view returns (address[])",
+    "function earned(address, address) view returns (uint256)",
+    "function addCoinsToDAO(uint256)",
+    "function claimAllRewards()",
+    "function withdrawPrincipal()"
+  ];
+  const GOV_ABI = [
+    "function proposalCount() view returns (uint256)",
+    "function proposals(uint256) view returns (address, string, uint256, uint256, uint256, bool)",
+    "function createProposal(string)",
+    "function castVote(uint256, bool)"
+  ];
+  const TOKEN_ABI = [
+    "function balanceOf(address) view returns (uint256)",
+    "function approve(address, uint256) returns (bool)",
+    "function allowance(address, address) view returns (uint256)",
+    "function symbol() view returns (string)"
+  ];
+
+  let provider, signer, stakingContract, govContract, tokenContract, userAddress;
 
   async function connectWallet() {
-    if (!window.ethereum) return alert("MetaMask not found");
+    if (!window.ethereum) return alert("Please install MetaMask");
     provider = new ethers.BrowserProvider(window.ethereum);
     const accounts = await provider.send("eth_requestAccounts", []);
     userAddress = accounts[0];
     signer = await provider.getSigner();
-    daoContract = new ethers.Contract(DAO_ADDRESS, DAO_ABI, signer);
-    tokenContract = new ethers.Contract(TOKEN_ADDRESS, ["function balanceOf(address) view returns (uint256)", "function approve(address, uint256) returns (bool)", "function allowance(address, address) view returns (uint256)"], signer);
-    
-    document.getElementById('walletText').innerText = userAddress.slice(0,6)+"...";
+
+    stakingContract = new ethers.Contract(STAKING_ADDR, STAKING_ABI, signer);
+    govContract = new ethers.Contract(GOV_ADDR, GOV_ABI, signer);
+    tokenContract = new ethers.Contract(TOKEN_ADDR, TOKEN_ABI, signer);
+
+    document.getElementById('walletText').innerText = userAddress.slice(0,6)+"..."+userAddress.slice(-4);
     refreshData();
+    setInterval(refreshData, 30000); // Auto refresh every 30s
   }
 
   async function refreshData() {
     if (!userAddress) return;
-    const total = await daoContract.totalStaked();
-    const userMember = await daoContract.members(userAddress);
-    const lockRem = await daoContract.getLockRemaining(userAddress);
-    const userBal = await tokenContract.balanceOf(userAddress);
-
-    // Stats
-    const stakeAmt = parseFloat(ethers.formatEther(userMember.stakedAmount));
-    const totalAmt = parseFloat(ethers.formatEther(total));
-    document.getElementById('votingPowerDisplay').innerText = totalAmt > 0 ? ((stakeAmt/totalAmt)*100).toFixed(2) + "%" : "0%";
-    document.getElementById('userBalance').innerText = parseFloat(ethers.formatEther(userBal)).toFixed(2);
-    
-    updateTimer(Number(lockRem));
-    loadLeaderboard();
-    loadActiveProposal();
-    loadRewards();
-  }
-
-  async function loadLeaderboard() {
-    const listBody = document.getElementById('daoList');
-    listBody.innerHTML = "";
-    let members = [];
-    
-    // Yahan hum loop chala kar memberList se addresses nikalte hain (Demo ke liye pehle 10)
-    for(let i=0; i<10; i++) {
-        try {
-            const addr = await daoContract.memberList(i);
-            const data = await daoContract.members(addr);
-            members.push({addr, stake: data.stakedAmount});
-        } catch(e) { break; }
-    }
-    
-    // Sort by Stake
-    members.sort((a,b) => Number(b.stake - a.stake));
-    members.forEach((m, index) => {
-        listBody.innerHTML += `
-            <tr class="border-b border-white/5 hover:bg-white/5">
-                <td class="p-4 text-gray-500">#${index+1}</td>
-                <td class="p-4 font-mono text-xs">${m.addr.slice(0,10)}...</td>
-                <td class="p-4 text-right text-purple-400 font-bold">${parseFloat(ethers.formatEther(m.stake)).toFixed(0)}</td>
-            </tr>`;
-        if(m.addr.toLowerCase() === userAddress.toLowerCase()) document.getElementById('userRankDisplay').innerText = "#"+(index+1);
-    });
-  }
-
-  async function loadActiveProposal() {
     try {
-        // Contract mein proposals list hoti hai, hum sabse latest nikalte hain
-        const p = await daoContract.proposals(0); // Demo: Index 0
-        document.getElementById('displayPropTitle').innerText = p[1];
-        document.getElementById('displayPropDesc').innerText = p[2];
+        const total = await stakingContract.totalStaked();
+        const member = await stakingContract.members(userAddress);
+        const balance = await tokenContract.balanceOf(userAddress);
+
+        const stakedWei = member[0]; 
+        const stakedEth = parseFloat(ethers.formatEther(stakedWei));
+        const totalEth = parseFloat(ethers.formatEther(total));
+
+        // Update Stats
+        document.getElementById('userStakedDisplay').innerText = stakedEth.toFixed(0);
+        document.getElementById('userBalance').innerText = parseFloat(ethers.formatEther(balance)).toFixed(2);
+        document.getElementById('votingPowerDisplay').innerText = totalEth > 0 ? ((stakedEth/totalEth)*100).toFixed(2) + "%" : "0%";
+
+        // Timer Logic
+        const lockPeriod = await stakingContract.LOCK_PERIOD();
+        const unlockTime = Number(member[1]) + Number(lockPeriod);
+        const remaining = unlockTime - Math.floor(Date.now()/1000);
+        updateTimer(remaining > 0 && stakedEth > 0 ? remaining : 0);
+
+        loadActiveProposal(totalEth);
+        loadRewards();
+    } catch(e) { console.error(e); }
+  }
+
+  async function loadActiveProposal(totalStaked) {
+    try {
+        const count = await govContract.proposalCount();
+        if(count == 0) return;
         
-        // Results calculation (dummy percentages for UI demo)
-        const totalVotes = Number(p[5]) + Number(p[6]) + Number(p[7]);
+        const p = await govContract.proposals(Number(count) - 1);
+        document.getElementById('displayPropTitle').innerText = p[1];
+        document.getElementById('displayPropDesc').innerText = "Live Proposal #" + count;
+
+        const vA = parseFloat(ethers.formatEther(p[3]));
+        const vB = parseFloat(ethers.formatEther(p[4]));
+        const totalVotes = vA + vB;
+
         if(totalVotes > 0) {
-            document.getElementById('resA').innerText = ((Number(p[5])/totalVotes)*100).toFixed(0) + "%";
-            // Isi tarah baki options set honge
+            document.getElementById('resA').innerText = ((vA/totalVotes)*100).toFixed(0) + "%";
+            document.getElementById('resB').innerText = ((vB/totalVotes)*100).toFixed(0) + "%";
         }
-    } catch(e) { console.log("No proposals found"); }
+    } catch(e) { console.log("Proposal error"); }
   }
 
   async function handleCreateProposal() {
     const title = document.getElementById('propTitle').value;
-    const desc = document.getElementById('propDesc').value;
-    if(!title || !desc) return alert("Fill all fields");
-    
+    if(!title) return alert("Enter title");
     try {
-        const tx = await daoContract.createProposal(title, desc, ["A", "B", "C", "D"]);
+        const tx = await govContract.createProposal(title);
         await tx.wait();
-        alert("Proposal Created!");
+        alert("Proposal Submitted!");
         refreshData();
-    } catch(e) { alert("Failed to create proposal"); }
+    } catch(e) { alert("Action Failed: Stake required"); }
   }
 
-  async function castVote(option) {
+  async function castVote(support) {
     try {
-        // Proposal ID 0 ke liye vote (A=0, B=1 etc based on your contract logic)
-        const tx = await daoContract.castVote(0, option);
+        const count = await govContract.proposalCount();
+        const tx = await govContract.castVote(Number(count)-1, support);
         await tx.wait();
-        alert("Voted Successfully!");
+        alert("Vote Recorded!");
         refreshData();
-    } catch(e) { alert("Already voted or Error"); }
-  }
-
-  // --- REWARDS & STAKE FUNCTIONS (SAME AS PREVIOUS) ---
-  async function loadRewards() {
-    const tokens = await daoContract.getActiveRewardTokens();
-    const container = document.getElementById('multiCoinList');
-    container.innerHTML = "";
-    for(let t of tokens) {
-        const reward = await daoContract.getPendingReward(userAddress, t);
-        const tContract = new ethers.Contract(t, ["function symbol() view returns (string)"], provider);
-        const symbol = await tContract.symbol();
-        container.innerHTML += `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/10">
-            <span class="text-sm font-bold">${symbol}</span>
-            <span class="text-xs text-cyan-400">${parseFloat(ethers.formatEther(reward)).toFixed(4)}</span>
-        </div>`;
-    }
+    } catch(e) { alert("Voting Failed"); }
   }
 
   async function handleStake() {
     const amt = document.getElementById('stakeAmount').value;
-    if(!amt) return;
+    if(!amt || amt <= 0) return;
     const wei = ethers.parseEther(amt);
     try {
-        const allowance = await tokenContract.allowance(userAddress, DAO_ADDRESS);
+        const allowance = await tokenContract.allowance(userAddress, STAKING_ADDR);
         if(allowance < wei) {
-            await (await tokenContract.approve(DAO_ADDRESS, ethers.MaxUint256)).wait();
+            const txApp = await tokenContract.approve(STAKING_ADDR, ethers.MaxUint256);
+            await txApp.wait();
         }
-        await (await daoContract.addCoinsToDAO(wei)).wait();
-        alert("Staked!"); refreshData();
+        const txStake = await stakingContract.addCoinsToDAO(wei);
+        await txStake.wait();
+        alert("Staked!");
+        refreshData();
     } catch(e) { alert("Stake Failed"); }
   }
 
-  function updateTimer(seconds) {
-    if(seconds <= 0) { document.getElementById('withdrawBtn').disabled = false; return; }
-    document.getElementById('days').innerText = Math.floor(seconds/(3600*24)).toString().padStart(2,'0');
-    document.getElementById('hours').innerText = Math.floor((seconds%(3600*24))/3600).toString().padStart(2,'0');
-    document.getElementById('mins').innerText = Math.floor((seconds%3600)/60).toString().padStart(2,'0');
+  async function loadRewards() {
+    try {
+        const tokens = await stakingContract.getActiveRewardTokens();
+        const list = document.getElementById('multiCoinList');
+        if(tokens.length > 0) list.innerHTML = "";
+        
+        for(let tAddr of tokens) {
+            const earned = await stakingContract.earned(userAddress, tAddr);
+            const tContract = new ethers.Contract(tAddr, ["function symbol() view returns (string)"], provider);
+            const symbol = await tContract.symbol();
+            
+            list.innerHTML += `
+                <div class="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/10">
+                    <span class="text-sm font-bold">${symbol}</span>
+                    <span class="text-xs text-cyan-400">${parseFloat(ethers.formatEther(earned)).toFixed(4)}</span>
+                </div>`;
+        }
+    } catch(e) { }
   }
 
-  async function claimAllRewards() { await (await daoContract.claimAllRewards()).wait(); refreshData(); }
-  async function withdrawPrincipal() { await (await daoContract.withdrawPrincipal()).wait(); refreshData(); }
+  function updateTimer(sec) {
+    if(sec <= 0) {
+        document.getElementById('withdrawBtn').disabled = false;
+        return;
+    }
+    document.getElementById('withdrawBtn').disabled = true;
+    document.getElementById('days').innerText = Math.floor(sec/(24*3600)).toString().padStart(2,'0');
+    document.getElementById('hours').innerText = Math.floor((sec%(24*3600))/3600).toString().padStart(2,'0');
+    document.getElementById('mins').innerText = Math.floor((sec%3600)/60).toString().padStart(2,'0');
+  }
+
+  async function claimAllRewards() { try { await (await stakingContract.claimAllRewards()).wait(); refreshData(); } catch(e){} }
+  async function withdrawPrincipal() { try { await (await stakingContract.withdrawPrincipal()).wait(); refreshData(); } catch(e){} }
   function setMax() { document.getElementById('stakeAmount').value = document.getElementById('userBalance').innerText; }
 </script>
 </body>
 </html>
-
-
-
