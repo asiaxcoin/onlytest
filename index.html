@@ -3,91 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AsiaX DAO Portal</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/4.1.1/web3.min.js"></script>
+    <title>AsiaX DAO Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
-        body { font-family: sans-serif; background: #121212; color: white; padding: 20px; text-align: center; }
-        .card { background: #1e1e1e; padding: 20px; border-radius: 15px; margin: 10px auto; max-width: 400px; border: 1px solid #333; }
-        button { background: #f3ba2f; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
-        input { width: 90%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #444; background: #000; color: white; }
-        .status { color: #00ff00; font-size: 0.8rem; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0b0e11; color: #eaecef; padding: 20px; text-align: center; }
+        .container { max-width: 500px; margin: auto; }
+        .card { background: #1e2329; padding: 20px; border-radius: 12px; margin: 15px 0; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        button { background: #f3ba2f; color: #000; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin: 8px 0; transition: 0.3s; }
+        button:hover { background: #db9e15; }
+        input { width: calc(100% - 24px); padding: 10px; margin: 10px 0; border-radius: 6px; border: 1px solid #474d57; background: #121212; color: white; }
+        .status { color: #f3ba2f; font-size: 0.9rem; margin-bottom: 20px; word-break: break-all; }
+        .label { text-align: left; font-size: 0.8rem; color: #848e9c; }
     </style>
 </head>
 <body>
 
-    <h1>AsiaX DAO</h1>
-    <div id="walletAddress" class="status">Wallet Not Connected</div>
-    <button onclick="connectWallet()">Connect SafePal / Trust / MetaMask</button>
+    <div class="container">
+        <h1>AsiaX1 DAO</h1>
+        <div id="status" class="status">Wallet Not Connected</div>
+        <button id="connectBtn">Connect SafePal / Trust Wallet</button>
 
-    <div class="card">
-        <h3>Staking (Contract 1)</h3>
-        <p>Your Stake: <span id="userStake">0</span> AsiaX</p>
-        <input type="number" id="stakeAmount" placeholder="Amount to Stake">
-        <button onclick="stakeTokens()">Stake Tokens</button>
-        <button onclick="claimRewards()" style="background: #28a745;">Claim Rewards</button>
-        <button onclick="withdrawTokens()" style="background: #dc3545;">Withdraw (After Lock)</button>
-    </div>
+        <div class="card">
+            <h3>Staking Portal</h3>
+            <div class="label">Your Staked: <span id="stakedBalance" style="color: white;">0</span> AsiaX</div>
+            <input type="number" id="stakeAmount" placeholder="Amount to Stake">
+            <button onclick="handleStake()">Stake Tokens</button>
+            <button onclick="handleClaim()" style="background: #2ebd85; color: white;">Claim Rewards</button>
+            <button onclick="handleWithdraw()" style="background: #f6465d; color: white;">Withdraw Principal</button>
+        </div>
 
-    <div class="card">
-        <h3>Governance (Contract 2)</h3>
-        <input type="text" id="propTitle" placeholder="Proposal Title">
-        <button onclick="createProposal()">Create Proposal</button>
-        <hr>
-        <input type="number" id="propId" placeholder="Proposal ID">
-        <div style="display: flex; gap: 10px;">
-            <button onclick="vote(true)">Vote YES</button>
-            <button onclick="vote(false)" style="background: #dc3545;">Vote NO</button>
+        <div class="card">
+            <h3>DAO Governance</h3>
+            <input type="text" id="propTitle" placeholder="Proposal Title">
+            <button onclick="handleCreateProposal()" style="background: #007bff; color: white;">Create Proposal</button>
+            <hr style="border: 0.1px solid #333; margin: 15px 0;">
+            <input type="number" id="propId" placeholder="Proposal ID">
+            <div style="display: flex; gap: 10px;">
+                <button onclick="handleVote(true)">Vote YES</button>
+                <button onclick="handleVote(false)" style="background: #f6465d; color: white;">Vote NO</button>
+            </div>
         </div>
     </div>
 
     <script>
-        let web3;
-        let account;
-        const stakingAddr = "0x831759FCA93d9bCD7119a997f951Cc62eD2CAa2c";
-        const govAddr = "0xeeA40E06c83649f8B0c10c40391bF38FaD7d805b";
-        const tokenAddr = "0x80675dCe080d52dD842e93bF3bc15E28dACD78CB";
+        // --- CONFIGURATION (Bhai yahan apne addresses dalo) ---
+        const TOKEN_ADDR = "0x80675dCe080d52dD842e93bF3bc15E28dACD78CB";
+        const STAKING_ADDR = "0x831759FCA93d9bCD7119a997f951Cc62eD2CAa2c";
+        const GOV_ADDR = "0xeeA40E06c83649f8B0c10c40391bF38FaD7d805b";
 
-        // Minimal ABIs (Aapko poore ABI yahan dalne honge)
-        const stakingABI = [[{"inputs":[{"internalType":"address","name":"_asiaxToken","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[],"name":"LOCK_PERIOD","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"activeRewardTokens","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"asiaxToken","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"claimRewards","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"account","type":"address"},{"internalType":"address","name":"rewardToken","type":"address"}],"name":"earned","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_user","type":"address"}],"name":"getStakedAmount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"members","outputs":[{"internalType":"uint256","name":"stakedAmount","type":"uint256"},{"internalType":"uint256","name":"lockTimestamp","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_token","type":"address"},{"internalType":"uint256","name":"_amount","type":"uint256"}],"name":"notifyRewardAmount","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"rewardTokenInfo","outputs":[{"internalType":"uint256","name":"rewardRate","type":"uint256"},{"internalType":"uint256","name":"rewardPerTokenStored","type":"uint256"},{"internalType":"uint256","name":"lastUpdateTime","type":"uint256"},{"internalType":"uint256","name":"periodFinish","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"},{"internalType":"address","name":"","type":"address"}],"name":"rewards","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"}],"name":"stake","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"totalStaked","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"},{"internalType":"address","name":"","type":"address"}],"name":"userRewardPerTokenPaid","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"}],"name":"withdraw","outputs":[],"stateMutability":"nonpayable","type":"function"}]]; 
-        const govABI = [[{"inputs":[{"internalType":"address","name":"_stakingAddress","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"id","type":"uint256"},{"indexed":false,"internalType":"string","name":"title","type":"string"},{"indexed":false,"internalType":"address","name":"proposer","type":"address"}],"name":"ProposalCreated","type":"event"},{"inputs":[],"name":"VOTING_PERIOD","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"_proposalId","type":"uint256"},{"internalType":"bool","name":"_support","type":"bool"}],"name":"castVote","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"string","name":"_title","type":"string"}],"name":"createProposal","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"},{"internalType":"address","name":"","type":"address"}],"name":"hasVoted","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"proposalCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"proposals","outputs":[{"internalType":"address","name":"proposer","type":"address"},{"internalType":"string","name":"title","type":"string"},{"internalType":"uint256","name":"endTime","type":"uint256"},{"internalType":"uint256","name":"votesFor","type":"uint256"},{"internalType":"uint256","name":"votesAgainst","type":"uint256"},{"internalType":"bool","name":"executed","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"stakingContract","outputs":[{"internalType":"contract IStaking","name":"","type":"address"}],"stateMutability":"view","type":"function"}]];
-        const tokenABI = [[{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"inputs":[{"internalType":"address","name":"","type":"address"},{"internalType":"address","name":"","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_spender","type":"address"},{"internalType":"uint256","name":"_value","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_spender","type":"address"},{"internalType":"uint256","name":"_subtractedValue","type":"uint256"}],"name":"decreaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_spender","type":"address"},{"internalType":"uint256","name":"_addedValue","type":"uint256"}],"name":"increaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_to","type":"address"},{"internalType":"uint256","name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_from","type":"address"},{"internalType":"address","name":"_to","type":"address"},{"internalType":"uint256","name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}]];
+        // --- ABIs (Remix se copy karke yahan dalo) ---
+        const ERC20_ABI = [ "function approve(address spender, uint256 amount) public returns (bool)", "function balanceOf(address account) view returns (uint256)" ];
+        const STAKING_ABI = [
+            "function stake(uint256 amount) external",
+            "function withdraw(uint256 amount) external",
+            "function claimRewards() external",
+            "function getStakedAmount(address user) view returns (uint256)"
+        ];
+        const GOV_ABI = [
+            "function createProposal(string title) external",
+            "function castVote(uint256 proposalId, bool support) external"
+        ];
 
-        async function connectWallet() {
+        let provider, signer, tokenContract, stakingContract, govContract;
+
+        // Wallet Connection Logic
+        document.getElementById('connectBtn').onclick = async () => {
             if (window.ethereum) {
-                // SafePal aur MetaMask dono window.ethereum use karte hain
-                web3 = new Web3(window.ethereum);
-                try {
-                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    account = accounts[0];
-                    document.getElementById('walletAddress').innerText = "Connected: " + account;
-                    updateUI();
-                } catch (err) {
-                    alert("User denied connection");
-                }
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                await provider.send("eth_requestAccounts", []);
+                signer = provider.getSigner();
+                const address = await signer.getAddress();
+                
+                document.getElementById('status').innerText = "Connected: " + address;
+                
+                // Contracts Initialization
+                tokenContract = new ethers.Contract(TOKEN_ADDR, ERC20_ABI, signer);
+                stakingContract = new ethers.Contract(STAKING_ADDR, STAKING_ABI, signer);
+                govContract = new ethers.Contract(GOV_ADDR, GOV_ABI, signer);
+                
+                refreshData();
             } else {
-                alert("Please open this in SafePal DApp Browser");
+                alert("Please use SafePal or Trust Wallet browser!");
             }
+        };
+
+        async function refreshData() {
+            const address = await signer.getAddress();
+            const staked = await stakingContract.getStakedAmount(address);
+            document.getElementById('stakedBalance').innerText = ethers.utils.formatEther(staked);
         }
 
-        async function stakeTokens() {
-            const amount = web3.utils.toWei(document.getElementById('stakeAmount').value, 'ether');
-            const tokenContract = new web3.eth.Contract(tokenABI, tokenAddr);
-            const stakingContract = new web3.eth.Contract(stakingABI, stakingAddr);
-
-            // 1. Approve (Zaroori Step)
-            await tokenContract.methods.approve(stakingAddr, amount).send({ from: account });
-            // 2. Stake
-            await stakingContract.methods.stake(amount).send({ from: account });
-            updateUI();
+        async function handleStake() {
+            try {
+                const amount = ethers.utils.parseEther(document.getElementById('stakeAmount').value);
+                document.getElementById('status').innerText = "Approving...";
+                const tx1 = await tokenContract.approve(STAKING_ADDR, amount);
+                await tx1.wait();
+                
+                document.getElementById('status').innerText = "Staking...";
+                const tx2 = await stakingContract.stake(amount);
+                await tx2.wait();
+                
+                document.getElementById('status').innerText = "Staked Successfully!";
+                refreshData();
+            } catch (e) { alert("Error: " + e.message); }
         }
 
-        async function updateUI() {
-            const stakingContract = new web3.eth.Contract(stakingABI, stakingAddr);
-            const staked = await stakingContract.methods.getStakedAmount(account).call();
-            document.getElementById('userStake').innerText = web3.utils.fromWei(staked, 'ether');
+        async function handleClaim() {
+            try {
+                const tx = await stakingContract.claimRewards();
+                await tx.wait();
+                alert("Rewards Claimed!");
+            } catch (e) { alert(e.message); }
         }
 
-        // Baki functions (withdraw, claim, vote) bhi isi tarah add honge...
+        async function handleWithdraw() {
+            try {
+                const amount = ethers.utils.parseEther(document.getElementById('stakeAmount').value);
+                const tx = await stakingContract.withdraw(amount);
+                await tx.wait();
+                refreshData();
+            } catch (e) { alert("Lock period not over or error: " + e.message); }
+        }
+
+        async function handleCreateProposal() {
+            const title = document.getElementById('propTitle').value;
+            const tx = await govContract.createProposal(title);
+            await tx.wait();
+            alert("Proposal Created!");
+        }
+
+        async function handleVote(side) {
+            const id = document.getElementById('propId').value;
+            const tx = await govContract.castVote(id, side);
+            await tx.wait();
+            alert("Voted!");
+        }
     </script>
 </body>
 </html>
