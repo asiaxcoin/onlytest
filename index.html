@@ -1,32 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AsiaX DAO Dashboard</title>
+    <title>AsiaX Polygon DAO Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0b0e11; color: #eaecef; padding: 20px; text-align: center; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0b0e11; color: #eaecef; padding: 20px; text-align: center; }
         .container { max-width: 500px; margin: auto; }
         .card { background: #1e2329; padding: 20px; border-radius: 12px; margin: 15px 0; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         button { background: #f3ba2f; color: #000; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin: 8px 0; transition: 0.3s; }
-        button:hover { background: #db9e15; }
+        button:hover { background: #db9e15; opacity: 0.9; }
         input { width: calc(100% - 24px); padding: 10px; margin: 10px 0; border-radius: 6px; border: 1px solid #474d57; background: #121212; color: white; }
-        .status { color: #f3ba2f; font-size: 0.9rem; margin-bottom: 20px; word-break: break-all; }
-        .label { text-align: left; font-size: 0.8rem; color: #848e9c; }
+        .status { color: #f3ba2f; font-size: 0.9rem; margin-bottom: 20px; word-break: break-all; font-weight: bold; }
+        .label { text-align: left; font-size: 0.8rem; color: #848e9c; margin-bottom: 5px; }
+        hr { border: 0.5px solid #333; margin: 20px 0; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>AsiaX1 DAO</h1>
+        <h1>AsiaX Polygon DAO</h1>
         <div id="status" class="status">Wallet Not Connected</div>
         <button id="connectBtn">Connect SafePal / Trust Wallet</button>
 
         <div class="card">
             <h3>Staking Portal</h3>
-            <div class="label">Your Staked: <span id="stakedBalance" style="color: white;">0</span> AsiaX</div>
-            <input type="number" id="stakeAmount" placeholder="Amount to Stake">
+            <div class="label">Total Staked: <span id="stakedBalance" style="color: white;">0</span> AsiaX</div>
+            <input type="number" id="stakeAmount" placeholder="Amount (e.g. 10)">
             <button onclick="handleStake()">Stake Tokens</button>
             <button onclick="handleClaim()" style="background: #2ebd85; color: white;">Claim Rewards</button>
             <button onclick="handleWithdraw()" style="background: #f6465d; color: white;">Withdraw Principal</button>
@@ -34,10 +35,12 @@
 
         <div class="card">
             <h3>DAO Governance</h3>
-            <input type="text" id="propTitle" placeholder="Proposal Title">
+            <div class="label">Proposal Title:</div>
+            <input type="text" id="propTitle" placeholder="Enter Idea...">
             <button onclick="handleCreateProposal()" style="background: #007bff; color: white;">Create Proposal</button>
-            <hr style="border: 0.1px solid #333; margin: 15px 0;">
-            <input type="number" id="propId" placeholder="Proposal ID">
+            <hr>
+            <div class="label">Vote on Proposal ID:</div>
+            <input type="number" id="propId" placeholder="ID Number">
             <div style="display: flex; gap: 10px;">
                 <button onclick="handleVote(true)">Vote YES</button>
                 <button onclick="handleVote(false)" style="background: #f6465d; color: white;">Vote NO</button>
@@ -46,13 +49,16 @@
     </div>
 
     <script>
-        // --- CONFIGURATION (Bhai yahan apne addresses dalo) ---
+        // --- 1. CONFIGURATION (Bhai yahan apne addresses dalo) ---
+
         const TOKEN_ADDR = "0x80675dCe080d52dD842e93bF3bc15E28dACD78CB";
         const STAKING_ADDR = "0x831759FCA93d9bCD7119a997f951Cc62eD2CAa2c";
         const GOV_ADDR = "0xeeA40E06c83649f8B0c10c40391bF38FaD7d805b";
-
-        // --- ABIs (Remix se copy karke yahan dalo) ---
-        const ERC20_ABI = [ "function approve(address spender, uint256 amount) public returns (bool)", "function balanceOf(address account) view returns (uint256)" ];
+        // --- 2. ABIs (Remix se copy karke yahan paste karein) ---
+        const TOKEN_ABI = [
+            "function approve(address spender, uint256 amount) public returns (bool)",
+            "function balanceOf(address account) view returns (uint256)"
+        ];
         const STAKING_ABI = [
             "function stake(uint256 amount) external",
             "function withdraw(uint256 amount) external",
@@ -66,78 +72,108 @@
 
         let provider, signer, tokenContract, stakingContract, govContract;
 
-        // Wallet Connection Logic
+        // Polygon Special Gas Function (SafePal Error Fix)
+        async function getPolygonGas() {
+            const feeData = await provider.getFeeData();
+            return {
+                maxFeePerGas: feeData.maxFeePerGas.mul(150).div(100), // 1.5x of Base Fee
+                maxPriorityFeePerGas: feeData.maxPriorityFeePerGas.mul(150).div(100) // 1.5x of Priority Fee
+            };
+        }
+
+        // Connect Wallet
         document.getElementById('connectBtn').onclick = async () => {
             if (window.ethereum) {
-                provider = new ethers.providers.Web3Provider(window.ethereum);
-                await provider.send("eth_requestAccounts", []);
-                signer = provider.getSigner();
-                const address = await signer.getAddress();
-                
-                document.getElementById('status').innerText = "Connected: " + address;
-                
-                // Contracts Initialization
-                tokenContract = new ethers.Contract(TOKEN_ADDR, ERC20_ABI, signer);
-                stakingContract = new ethers.Contract(STAKING_ADDR, STAKING_ABI, signer);
-                govContract = new ethers.Contract(GOV_ADDR, GOV_ABI, signer);
-                
-                refreshData();
-            } else {
-                alert("Please use SafePal or Trust Wallet browser!");
-            }
+                try {
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    await provider.send("eth_requestAccounts", []);
+                    signer = provider.getSigner();
+                    const address = await signer.getAddress();
+                    
+                    document.getElementById('status').innerText = "✅ Connected: " + address;
+                    
+                    tokenContract = new ethers.Contract(TOKEN_ADDR, TOKEN_ABI, signer);
+                    stakingContract = new ethers.Contract(STAKING_ADDR, STAKING_ABI, signer);
+                    govContract = new ethers.Contract(GOV_ADDR, GOV_ABI, signer);
+                    
+                    refreshData();
+                } catch (e) { alert("Connection Error: " + e.message); }
+            } else { alert("Please use SafePal/Trust Wallet Browser!"); }
         };
 
         async function refreshData() {
-            const address = await signer.getAddress();
-            const staked = await stakingContract.getStakedAmount(address);
-            document.getElementById('stakedBalance').innerText = ethers.utils.formatEther(staked);
+            try {
+                const address = await signer.getAddress();
+                const staked = await stakingContract.getStakedAmount(address);
+                document.getElementById('stakedBalance').innerText = ethers.utils.formatEther(staked);
+            } catch (e) { console.log("Refresh Error:", e); }
         }
 
         async function handleStake() {
             try {
                 const amount = ethers.utils.parseEther(document.getElementById('stakeAmount').value);
-                document.getElementById('status').innerText = "Approving...";
-                const tx1 = await tokenContract.approve(STAKING_ADDR, amount);
+                const gas = await getPolygonGas();
+                
+                document.getElementById('status').innerText = "1/2: Approving Tokens...";
+                const tx1 = await tokenContract.approve(STAKING_ADDR, amount, gas);
                 await tx1.wait();
                 
-                document.getElementById('status').innerText = "Staking...";
-                const tx2 = await stakingContract.stake(amount);
+                document.getElementById('status').innerText = "2/2: Staking in Progress...";
+                const tx2 = await stakingContract.stake(amount, gas);
                 await tx2.wait();
                 
-                document.getElementById('status').innerText = "Staked Successfully!";
+                document.getElementById('status').innerText = "✅ Staked Successfully!";
                 refreshData();
-            } catch (e) { alert("Error: " + e.message); }
+            } catch (e) { 
+                document.getElementById('status').innerText = "❌ Error Occurred";
+                alert(e.message); 
+            }
         }
 
         async function handleClaim() {
             try {
-                const tx = await stakingContract.claimRewards();
+                const gas = await getPolygonGas();
+                document.getElementById('status').innerText = "Claiming Rewards...";
+                const tx = await stakingContract.claimRewards(gas);
                 await tx.wait();
-                alert("Rewards Claimed!");
+                document.getElementById('status').innerText = "✅ Rewards Claimed!";
             } catch (e) { alert(e.message); }
         }
 
         async function handleWithdraw() {
             try {
                 const amount = ethers.utils.parseEther(document.getElementById('stakeAmount').value);
-                const tx = await stakingContract.withdraw(amount);
+                const gas = await getPolygonGas();
+                document.getElementById('status').innerText = "Withdrawing...";
+                const tx = await stakingContract.withdraw(amount, gas);
                 await tx.wait();
+                document.getElementById('status').innerText = "✅ Withdrawn!";
                 refreshData();
-            } catch (e) { alert("Lock period not over or error: " + e.message); }
+            } catch (e) { alert("Error: " + e.message); }
         }
 
         async function handleCreateProposal() {
-            const title = document.getElementById('propTitle').value;
-            const tx = await govContract.createProposal(title);
-            await tx.wait();
-            alert("Proposal Created!");
+            try {
+                const title = document.getElementById('propTitle').value;
+                const gas = await getPolygonGas();
+                document.getElementById('status').innerText = "Creating Proposal...";
+                const tx = await govContract.createProposal(title, gas);
+                await tx.wait();
+                alert("Proposal Created!");
+                document.getElementById('status').innerText = "✅ Proposal Online";
+            } catch (e) { alert(e.message); }
         }
 
         async function handleVote(side) {
-            const id = document.getElementById('propId').value;
-            const tx = await govContract.castVote(id, side);
-            await tx.wait();
-            alert("Voted!");
+            try {
+                const id = document.getElementById('propId').value;
+                const gas = await getPolygonGas();
+                document.getElementById('status').innerText = "Voting...";
+                const tx = await govContract.castVote(id, side, gas);
+                await tx.wait();
+                alert("Voted Successfully!");
+                document.getElementById('status').innerText = "✅ Vote Recorded";
+            } catch (e) { alert(e.message); }
         }
     </script>
 </body>
