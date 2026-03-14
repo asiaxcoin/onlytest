@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>AsiaX Pro • Master DAO</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
@@ -87,13 +87,11 @@
 </div>
 
 <script>
-
-   // ================== CONFIG ==================
+    // ================== CONFIG ==================
     const STAKING_ADDR = "0x23E12941383c7de11D8ab066Ba96897535DD3e48";
-   const GOV_ADDR = "0x074fF1363A23EE4142963bD34e4f88F7552C2ea1";
- const TOKEN_ADDR = "0x80675dCe080d52dD842e93bF3bc15E28dACD78CB";
- 
-   // ABI definitions (Standard v5)
+    const GOV_ADDR = "0x074fF1363A23EE4142963bD34e4f88F7552C2ea1";
+    const TOKEN_ADDR = "0x80675dCe080d52dD842e93bF3bc15E28dACD78CB";
+
     const STAKING_ABI = [
         "function totalStaked() view returns (uint256)",
         "function members(address) view returns (uint256 stakedAmount, uint256 lockTimestamp)",
@@ -118,103 +116,146 @@
 
     let provider, signer, stakingContract, govContract, tokenContract, userAddress;
 
-    // Connect Wallet Logic for SafePal & Mobile
+    // Mobile-friendly provider check
     async function connectWallet() {
         try {
-            if (!window.ethereum) return alert("Please open in SafePal/TrustWallet browser");
+            if (typeof window.ethereum === 'undefined') {
+                return alert("Wallet not detected. Please use SafePal/TrustWallet browser.");
+            }
 
-            // Universal provider detection
-            const ethProvider = window.ethereum;
-            provider = new ethers.providers.Web3Provider(ethProvider, "any");
-
-            // Account Request
-            const accounts = await ethProvider.request({ method: 'eth_requestAccounts' });
+            // Mobile compatibility: Re-init provider each time
+            provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+            
+            // SafePal/MetaMask account request
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
             userAddress = accounts[0];
             signer = provider.getSigner();
 
-            // Contracts Init
+            // Init Contracts
             stakingContract = new ethers.Contract(STAKING_ADDR, STAKING_ABI, signer);
             govContract = new ethers.Contract(GOV_ADDR, GOV_ABI, signer);
             tokenContract = new ethers.Contract(TOKEN_ADDR, TOKEN_ABI, signer);
 
-            document.getElementById('walletText').innerText = userAddress.slice(0,6) + "...";
+            document.getElementById('walletText').innerText = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
             
-            // Refresh Data
+            // Initial Data load
             refreshData();
+            
+            // Setup listeners for account change
+            window.ethereum.on('accountsChanged', (accs) => {
+                if(accs.length > 0) location.reload();
+            });
+
         } catch (e) {
-            alert("Connection Failed: " + e.message);
+            console.error(e);
+            alert("Connection Failed: " + (e.message || "Unknown error"));
         }
     }
 
     async function refreshData() {
-        if (!userAddress) return;
+        if (!userAddress || !stakingContract) return;
         try {
-            const total = await stakingContract.totalStaked();
-            const member = await stakingContract.members(userAddress);
-            const balance = await tokenContract.balanceOf(userAddress);
+            const [total, member, balance, lockPeriod] = await Promise.all([
+                stakingContract.totalStaked(),
+                stakingContract.members(userAddress),
+                tokenContract.balanceOf(userAddress),
+                stakingContract.LOCK_PERIOD()
+            ]);
 
             const stakedEth = parseFloat(ethers.utils.formatEther(member.stakedAmount));
             const totalEth = parseFloat(ethers.utils.formatEther(total));
+            const balEth = parseFloat(ethers.utils.formatEther(balance));
 
-            document.getElementById('userStakedDisplay').innerText = stakedEth.toFixed(0);
-            document.getElementById('userBalance').innerText = parseFloat(ethers.utils.formatEther(balance)).toFixed(2);
+            document.getElementById('userStakedDisplay').innerText = stakedEth.toLocaleString(undefined, {maximumFractionDigits: 2});
+            document.getElementById('userBalance').innerText = balEth.toFixed(2);
             document.getElementById('votingPowerDisplay').innerText = totalEth > 0 ? ((stakedEth/totalEth)*100).toFixed(2) + "%" : "0%";
 
-            const lockPeriod = await stakingContract.LOCK_PERIOD();
+            // Timer Logic
             const unlockTime = Number(member.lockTimestamp) + Number(lockPeriod);
-            const remaining = unlockTime - Math.floor(Date.now()/1000);
+            const now = Math.floor(Date.now()/1000);
+            const remaining = unlockTime - now;
             updateTimer(remaining > 0 && stakedEth > 0 ? remaining : 0);
 
             loadActiveProposal();
             loadRewards();
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error("Refresh Error:", e); }
     }
 
     async function handleStake() {
         const amt = document.getElementById('stakeAmount').value;
-        if(!amt || amt <= 0) return alert("Enter amount");
-        const wei = ethers.utils.parseEther(amt);
+        if(!amt || parseFloat(amt) <= 0) return alert("Enter valid amount");
+        
         try {
+            const wei = ethers.utils.parseEther(amt.toString());
+            
+            // Button loading state
+            const btn = document.getElementById('stakeBtn');
+            const originalText = btn.innerText;
+            btn.innerText = "WAITING...";
+            btn.disabled = true;
+
             const allowance = await tokenContract.allowance(userAddress, STAKING_ADDR);
+            
             if(allowance.lt(wei)) {
                 const txApp = await tokenContract.approve(STAKING_ADDR, ethers.constants.MaxUint256);
                 await txApp.wait();
             }
+            
             const txStake = await stakingContract.addCoinsToDAO(wei);
             await txStake.wait();
-            alert("Success: Staked!");
+            
+            alert("Staking Successful!");
             refreshData();
-        } catch(e) { alert("Error: " + (e.reason || "Transaction Failed")); }
+        } catch(e) { 
+            alert("Error: " + (e.data?.message || e.message || "Transaction Failed")); 
+        } finally {
+            document.getElementById('stakeBtn').innerText = "STAKE NOW";
+            document.getElementById('stakeBtn').disabled = false;
+        }
     }
 
     async function loadActiveProposal() {
         try {
             const count = await govContract.proposalCount();
-            if(count == 0) return;
+            if(count.eq(0)) return;
             const p = await govContract.proposals(count.sub(1));
             document.getElementById('displayPropTitle').innerText = p[1];
-        } catch(e) { }
+        } catch(e) { console.log("Proposal Load Error"); }
     }
 
     async function loadRewards() {
         try {
             const tokens = await stakingContract.getActiveRewardTokens();
             const list = document.getElementById('multiCoinList');
-            if(tokens.length > 0) list.innerHTML = "";
+            if(tokens.length === 0) {
+                list.innerText = "No active rewards";
+                return;
+            }
+            list.innerHTML = "";
             for(let t of tokens) {
                 const earn = await stakingContract.earned(userAddress, t);
                 const tC = new ethers.Contract(t, ["function symbol() view returns (string)"], provider);
                 const sym = await tC.symbol();
-                list.innerHTML += `<div class="flex justify-between p-2 bg-white/5 rounded-lg border border-white/5">
-                    <span>${sym}</span><span class="text-cyan-400">${parseFloat(ethers.utils.formatEther(earn)).toFixed(4)}</span>
-                </div>`;
+                if(parseFloat(ethers.utils.formatEther(earn)) > 0) {
+                    list.innerHTML += `<div class="flex justify-between p-2 bg-white/5 rounded-lg border border-white/5">
+                        <span>${sym}</span><span class="text-cyan-400">${parseFloat(ethers.utils.formatEther(earn)).toFixed(6)}</span>
+                    </div>`;
+                }
             }
-        } catch(e) { }
+            if(list.innerHTML === "") list.innerText = "0.00 Rewards";
+        } catch(e) { console.error("Rewards Error"); }
     }
 
     function updateTimer(sec) {
-        if(sec <= 0) { document.getElementById('withdrawBtn').disabled = false; return; }
-        document.getElementById('withdrawBtn').disabled = true;
+        const btn = document.getElementById('withdrawBtn');
+        if(sec <= 0) { 
+            btn.disabled = false; 
+            document.getElementById('days').innerText = "00";
+            document.getElementById('hours').innerText = "00";
+            document.getElementById('mins').innerText = "00";
+            return; 
+        }
+        btn.disabled = true;
         document.getElementById('days').innerText = Math.floor(sec/86400).toString().padStart(2,'0');
         document.getElementById('hours').innerText = Math.floor((sec%86400)/3600).toString().padStart(2,'0');
         document.getElementById('mins').innerText = Math.floor((sec%3600)/60).toString().padStart(2,'0');
@@ -227,12 +268,36 @@
             await tx.wait();
             alert("Vote Casted!");
             refreshData();
-        } catch(e) { alert("Voting Error"); }
+        } catch(e) { alert("Voting Error: Check if you have staked tokens."); }
     }
 
-    async function claimAllRewards() { await (await stakingContract.claimAllRewards()).wait(); refreshData(); }
-    async function withdrawPrincipal() { await (await stakingContract.withdrawPrincipal()).wait(); refreshData(); }
-    function setMax() { document.getElementById('stakeAmount').value = document.getElementById('userBalance').innerText; }
+    async function claimAllRewards() { 
+        try {
+            const tx = await stakingContract.claimAllRewards();
+            await tx.wait();
+            refreshData();
+        } catch(e) { alert("Claim Failed"); }
+    }
+
+    async function withdrawPrincipal() { 
+        try {
+            const tx = await stakingContract.withdrawPrincipal();
+            await tx.wait();
+            refreshData();
+        } catch(e) { alert("Withdraw Failed: Check lock period."); }
+    }
+
+    function setMax() { 
+        const bal = document.getElementById('userBalance').innerText;
+        document.getElementById('stakeAmount').value = bal; 
+    }
+
+    // Auto-connect if already authorized
+    window.addEventListener('load', () => {
+        if (window.ethereum && window.ethereum.selectedAddress) {
+            connectWallet();
+        }
+    });
 </script>
 </body>
 </html>
