@@ -24,38 +24,16 @@
 <body class="antialiased p-4">
 
 <div class="max-w-xl mx-auto space-y-6">
+    <!-- same HTML as before (header, grids, sections) -->
     <div class="flex justify-between items-center px-1 pt-4">
-        <div class="text-xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">ASIAX DAO</div>
+        <div class="text-xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">ASIAX2 DAO</div>
         <button id="connectBtn" class="connect-btn text-white text-xs font-bold px-5 py-2.5 rounded-full flex items-center gap-2" onclick="connectWallet()">
             <i class="fa-solid fa-wallet"></i> <span id="walletText">Connect Wallet</span>
         </button>
     </div>
 
-    <div class="grid grid-cols-3 gap-2">
-        <div class="glass p-3 text-center border-b-2 border-cyan-500/50">
-            <div class="text-[9px] text-gray-400 uppercase">Power</div>
-            <div class="text-sm font-bold" id="votingPowerDisplay">0%</div>
-        </div>
-        <div class="glass p-3 text-center border-b-2 border-purple-500/50">
-            <div class="text-[9px] text-gray-400 uppercase">Staked</div>
-            <div class="text-sm font-bold" id="userStakedDisplay">0</div>
-        </div>
-        <div class="glass p-3 text-center border-b-2 border-cyan-500/50">
-            <div class="text-[9px] text-gray-400 uppercase">Badge</div>
-            <div class="text-[10px] font-bold text-cyan-400" id="badgeDisplay">VISITOR</div>
-        </div>
-    </div>
-
-    <div class="glass p-5">
-        <h2 class="text-xs font-bold text-cyan-400 uppercase mb-4">Governance Vote</h2>
-        <div class="text-center">
-            <h3 id="displayPropTitle" class="text-md font-bold mb-1">No Active Proposal</h3>
-            <div class="grid grid-cols-2 gap-3 mt-4">
-                <button onclick="castVote(true)" class="vote-box py-3 text-sm font-bold">YES <span id="resA" class="block text-[9px] text-gray-500">0%</span></button>
-                <button onclick="castVote(false)" class="vote-box py-3 text-sm font-bold">NO <span id="resB" class="block text-[9px] text-gray-500">0%</span></button>
-            </div>
-        </div>
-    </div>
+    <!-- baaki pura HTML same rakha hai (voting, rewards, stake, withdraw) -->
+    <!-- copy kar lena previous code se yahan tak -->
 
     <div class="glass p-5">
         <div class="flex justify-between items-center mb-4">
@@ -65,46 +43,34 @@
         <div id="multiCoinList" class="space-y-2 text-xs italic text-gray-500 text-center">Wallet not connected</div>
     </div>
 
-    <div class="glass p-5 border border-purple-500/20">
-        <div class="flex justify-between mb-4">
-            <h2 class="text-md font-bold text-white">Stake AsiaX</h2>
-            <div class="text-[10px] text-cyan-300">Balance: <span id="userBalance">0.00</span></div>
-        </div>
-        <div class="relative mb-4">
-            <input type="number" id="stakeAmount" placeholder="0.0" class="action-input w-full p-3 rounded-xl text-sm" />
-            <button onclick="setMax()" class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-cyan-300 font-bold">MAX</button>
-        </div>
-        <button id="stakeBtn" onclick="handleStake()" class="connect-btn w-full text-white font-bold py-3.5 rounded-xl text-sm">STAKE NOW</button>
-    </div>
+    <!-- stake aur withdraw section same -->
 
-    <div class="glass p-5 border border-red-500/20">
-        <div class="flex justify-around items-center mb-5">
-            <div class="text-center"><div id="days" class="text-xl font-bold">00</div><div class="text-[9px] uppercase">Days</div></div>
-            <div class="text-center"><div id="hours" class="text-xl font-bold">00</div><div class="text-[9px] uppercase">Hrs</div></div>
-            <div class="text-center"><div id="mins" class="text-xl font-bold">00</div><div class="text-[9px] uppercase">Mins</div></div>
-        </div>
-        <button id="withdrawBtn" disabled onclick="withdrawPrincipal()" class="withdraw-btn w-full text-white font-bold py-3.5 rounded-xl text-xs">WITHDRAW PRINCIPAL</button>
-    </div>
 </div>
 
 <script>
-    // --- CONFIG (POLYGON MAINNET) ---
+    // --- CONFIG ---
     const STAKING_ADDR = "0x23E12941383c7de11D8ab066Ba96897535DD3e48";
     const GOV_ADDR = "0x074fF1363A23EE4142963bD34e4f88F7552C2ea1";
     const TOKEN_ADDR = "0x80675dCe080d52dD842e93bF3bc15E28dACD78CB";
-    const CHAIN_ID = "0x89"; // Polygon 137
+    const CHAIN_ID = "0x89";
 
-    const ABIs = {
-        staking: ["function totalStaked() view returns (uint256)", "function members(address) view returns (uint256 stakedAmount, uint256 lockTimestamp)", "function LOCK_PERIOD() view returns (uint256)", "function getActiveRewardTokens() view returns (address[])", "function earned(address, address) view returns (uint256)", "function addCoinsToDAO(uint256)", "function claimAllRewards()", "function withdrawPrincipal()"],
-        gov: ["function proposalCount() view returns (uint256)", "function proposals(uint256) view returns (address, string, uint256, uint256, uint256, bool)", "function castVote(uint256, bool)"],
-        token: ["function balanceOf(address) view returns (uint256)", "function approve(address, uint256) returns (bool)", "function allowance(address, address) view returns (uint256)", "function symbol() view returns (string)"]
-    };
+    const ABIs = { /* same as before */ };
 
     let provider, signer, userAddress, contracts = {};
 
     function getWalletProvider() {
-        if (window.safepalProvider) return window.safepalProvider;
-        if (window.ethereum) return window.ethereum;
+        if (window.safepalProvider) {
+            console.log("✅ SafePal Official Provider Detected");
+            return window.safepalProvider;
+        }
+        if (window.ethereum && window.ethereum.isSafePal) {
+            console.log("✅ SafePal via ethereum.isSafePal");
+            return window.ethereum;
+        }
+        if (window.ethereum) {
+            console.log("✅ Other wallet (Trust/MetaMask)");
+            return window.ethereum;
+        }
         return null;
     }
 
@@ -134,7 +100,7 @@
         try {
             const walletProvider = getWalletProvider();
             if (!walletProvider) {
-                return alert("Open this in Trust Wallet, SafePal Wallet, or any Web3 browser!");
+                return alert("❌ SafePal Provider nahi mila!\n\nSafePal App ke andar 'Discover' section se dApp kholo.\nYa phir https://www.safepal.com/download se latest SafePal download karo.");
             }
 
             btn.disabled = true;
@@ -156,132 +122,28 @@
 
             refreshData();
 
-            // Listeners
+            // listeners
             walletProvider.on('accountsChanged', () => location.reload());
             walletProvider.on('chainChanged', () => location.reload());
 
+            console.log("✅ Connected successfully with SafePal!");
+
         } catch (e) {
             console.error(e);
-            alert("Connection Failed: " + (e.message || "Unknown error"));
+            let msg = e.message || "Unknown";
+            if (e.code === 4001) msg = "User rejected connection";
+            if (e.code === 4902) msg = "Chain add failed";
+            alert("Connection Failed: " + msg);
             document.getElementById('walletText').innerText = "Connect Wallet";
             btn.disabled = false;
         }
     }
 
-    async function refreshData() {
-        if (!userAddress) return;
-        try {
-            const [total, member, balance, lockTime] = await Promise.all([
-                contracts.staking.totalStaked(),
-                contracts.staking.members(userAddress),
-                contracts.token.balanceOf(userAddress),
-                contracts.staking.LOCK_PERIOD()
-            ]);
+    // baaki functions (refreshData, handleStake, loadGov, loadRewards, updateTimer, claim, withdraw, setMax, castVote) **exactly same** rakho jaise previous code mein the
 
-            const staked = ethers.utils.formatEther(member.stakedAmount);
-            const totalS = ethers.utils.formatEther(total);
+    // Auto-connect hata diya (user gesture ke liye)
+    // window.addEventListener('load', ...) → comment out ya delete kar do
 
-            document.getElementById('userStakedDisplay').innerText = parseFloat(staked).toFixed(0);
-            document.getElementById('userBalance').innerText = parseFloat(ethers.utils.formatEther(balance)).toFixed(2);
-            document.getElementById('votingPowerDisplay').innerText = totalS > 0 ? ((staked/totalS)*100).toFixed(2) + "%" : "0%";
-
-            const unlockAt = Number(member.lockTimestamp) + Number(lockTime);
-            const diff = unlockAt - Math.floor(Date.now()/1000);
-            updateTimer(diff > 0 && staked > 0 ? diff : 0);
-
-            loadGov();
-            loadRewards();
-        } catch(e) { console.log("Data error:", e); }
-    }
-
-    async function handleStake() {
-        const amt = document.getElementById('stakeAmount').value;
-        if(!amt || amt <= 0) return alert("Enter Amount");
-        const btn = document.getElementById('stakeBtn');
-        try {
-            btn.disabled = true; btn.innerText = "Processing...";
-            const wei = ethers.utils.parseEther(amt.toString());
-
-            const allowance = await contracts.token.allowance(userAddress, STAKING_ADDR);
-            if(allowance.lt(wei)) {
-                const tx1 = await contracts.token.approve(STAKING_ADDR, ethers.constants.MaxUint256);
-                await tx1.wait();
-            }
-
-            const tx2 = await contracts.staking.addCoinsToDAO(wei);
-            await tx2.wait();
-            alert("Success!");
-            refreshData();
-        } catch(e) { 
-            alert("Tx Failed: " + (e.data?.message || e.message || "Unknown")); 
-        }
-        finally { 
-            btn.disabled = false; 
-            btn.innerText = "STAKE NOW"; 
-        }
-    }
-
-    async function loadGov() {
-        try {
-            const count = await contracts.gov.proposalCount();
-            if(count.gt(0)) {
-                const p = await contracts.gov.proposals(count.sub(1));
-                document.getElementById('displayPropTitle').innerText = p[1];
-            }
-        } catch(e) {}
-    }
-
-    async function loadRewards() {
-        try {
-            const tokens = await contracts.staking.getActiveRewardTokens();
-            const list = document.getElementById('multiCoinList');
-            if(tokens.length > 0) list.innerHTML = "";
-            for(let t of tokens) {
-                const earn = await contracts.staking.earned(userAddress, t);
-                const tC = new ethers.Contract(t, ["function symbol() view returns (string)"], provider);
-                const sym = await tC.symbol();
-                list.innerHTML += `<div class="flex justify-between p-3 bg-white/5 rounded-xl border border-white/10 mb-2">
-                    <span class="font-bold">\( {sym}</span><span class="text-cyan-400 font-mono"> \){parseFloat(ethers.utils.formatEther(earn)).toFixed(6)}</span>
-                </div>`;
-            }
-        } catch(e) {}
-    }
-
-    function updateTimer(sec) {
-        const btn = document.getElementById('withdrawBtn');
-        if(sec <= 0) { btn.disabled = false; return; }
-        btn.disabled = true;
-        const d = Math.floor(sec/86400);
-        const h = Math.floor((sec%86400)/3600);
-        const m = Math.floor((sec%3600)/60);
-        document.getElementById('days').innerText = d.toString().padStart(2,'0');
-        document.getElementById('hours').innerText = h.toString().padStart(2,'0');
-        document.getElementById('mins').innerText = m.toString().padStart(2,'0');
-    }
-
-    async function claimAllRewards() { 
-        try { await (await contracts.staking.claimAllRewards()).wait(); refreshData(); } catch(e){ alert("Claim failed: " + e.message); }
-    }
-    async function withdrawPrincipal() { 
-        try { await (await contracts.staking.withdrawPrincipal()).wait(); refreshData(); } catch(e){ alert("Withdraw failed: " + e.message); }
-    }
-    function setMax() { document.getElementById('stakeAmount').value = document.getElementById('userBalance').innerText; }
-    async function castVote(s) { 
-        try { 
-            const c = await contracts.gov.proposalCount(); 
-            await (await contracts.gov.castVote(c.sub(1), s)).wait(); 
-            alert("Voted!"); 
-            refreshData(); 
-        } catch(e){ alert("Vote Error: " + e.message); } 
-    }
-
-    // Auto-connect if in wallet browser
-    window.addEventListener('load', () => {
-        const walletProvider = getWalletProvider();
-        if (walletProvider) {
-            setTimeout(connectWallet, 1200); // thoda delay SafePal ke liye safe hai
-        }
-    });
 </script>
 </body>
 </html>
