@@ -1,180 +1,285 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AsiaX Polygon DAO Dashboard</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0b0e11; color: #eaecef; padding: 20px; text-align: center; }
-        .container { max-width: 500px; margin: auto; }
-        .card { background: #1e2329; padding: 20px; border-radius: 12px; margin: 15px 0; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        button { background: #f3ba2f; color: #000; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin: 8px 0; transition: 0.3s; }
-        button:hover { background: #db9e15; opacity: 0.9; }
-        input { width: calc(100% - 24px); padding: 10px; margin: 10px 0; border-radius: 6px; border: 1px solid #474d57; background: #121212; color: white; }
-        .status { color: #f3ba2f; font-size: 0.9rem; margin-bottom: 20px; word-break: break-all; font-weight: bold; }
-        .label { text-align: left; font-size: 0.8rem; color: #848e9c; margin-bottom: 5px; }
-        hr { border: 0.5px solid #333; margin: 20px 0; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AsiaX Pro • Master DAO</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+    body { background: linear-gradient(135deg, #0f001a 0%, #05000f 100%); color: #e0e0ff; font-family: 'Inter', sans-serif; min-height: 100vh; margin: 0; }
+    .glass { background: rgba(30, 20, 60, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(100, 100, 255, 0.15); border-radius: 1.5rem; }
+    .neon-border { box-shadow: 0 0 15px rgba(0, 255, 255, 0.1); }
+    .connect-btn { background: linear-gradient(90deg, #00d4ff, #7b00ff); box-shadow: 0 8px 20px rgba(0, 212, 255, 0.3); transition: all 0.3s ease; }
+    .vote-box { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1rem; transition: 0.3s; color: white; cursor: pointer; }
+    .vote-box:hover { background: rgba(0, 212, 255, 0.1); border-color: #00d4ff; color: #00d4ff; }
+    .action-input { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; outline: none; }
+    .withdraw-btn { background: linear-gradient(90deg, #ff4b2b, #ff416c); transition: all 0.3s; }
+    .withdraw-btn:disabled { background: #333; cursor: not-allowed; opacity: 0.5; }
+    .status-msg { font-size: 0.75rem; color: #00d4ff; font-weight: bold; margin-top: 5px; }
+  </style>
 </head>
-<body>
+<body class="antialiased p-4 sm:p-6">
 
-    <div class="container">
-        <h1>AsiaX Polygon DAO</h1>
-        <div id="status" class="status">Wallet Not Connected</div>
-        <button id="connectBtn">Connect SafePal / Trust Wallet</button>
+<div class="max-w-2xl mx-auto px-2 sm:px-4 py-6 sm:py-8">
+  <div class="flex justify-between items-center mb-10">
+    <div class="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">ASIAX DAO</div>
+    <button id="connectBtn" class="connect-btn text-white text-sm font-bold px-5 py-2.5 rounded-full flex items-center gap-2" onclick="connectWallet()">
+      <i class="fa-solid fa-wallet"></i> <span id="walletText">Connect Wallet</span>
+    </button>
+  </div>
 
-        <div class="card">
-            <h3>Staking Portal</h3>
-            <div class="label">Total Staked: <span id="stakedBalance" style="color: white;">0</span> AsiaX</div>
-            <input type="number" id="stakeAmount" placeholder="Amount (e.g. 10)">
-            <button onclick="handleStake()">Stake Tokens</button>
-            <button onclick="handleClaim()" style="background: #2ebd85; color: white;">Claim Rewards</button>
-            <button onclick="handleWithdraw()" style="background: #f6465d; color: white;">Withdraw Principal</button>
+  <div class="grid grid-cols-3 gap-3 mb-8 text-center">
+    <div class="glass p-4 border-b-2 border-purple-600/50">
+      <div class="text-[10px] text-gray-400 uppercase">Voting Power</div>
+      <div class="text-xl font-bold" id="votingPowerDisplay">0.00%</div>
+    </div>
+    <div class="glass p-4 border-b-2 border-purple-600/50">
+      <div class="text-[10px] text-gray-400 uppercase">My Staked</div>
+      <div class="text-xl font-bold" id="userStakedDisplay">0</div>
+    </div>
+    <div class="glass p-4 border-b-2 border-purple-600/50">
+      <div class="text-[10px] text-gray-400 uppercase">Rank</div>
+      <div class="text-sm font-bold text-cyan-400" id="badgeDisplay">NEWBIE 🐟</div>
+    </div>
+  </div>
+
+  <div class="glass p-6 mb-10 border border-white/10">
+    <h2 class="text-sm font-bold text-cyan-400 uppercase tracking-widest mb-4"><i class="fa-solid fa-plus-circle mr-2"></i>Create New Proposal</h2>
+    <div class="space-y-3">
+        <input type="text" id="propTitle" placeholder="Enter your proposal idea..." class="action-input w-full p-3 rounded-xl text-sm" />
+        <button onclick="handleCreateProposal()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl text-sm transition">Submit Proposal</button>
+    </div>
+  </div>
+
+  <div id="activeProposalSection" class="mb-10 text-center">
+    <div class="text-xs text-cyan-400 font-bold uppercase tracking-[0.25em] mb-4">Live Governance Voting</div>
+    <div class="glass p-6 mb-4">
+        <h3 id="displayPropTitle" class="text-lg font-bold mb-2">No Active Proposal</h3>
+        <p id="displayPropDesc" class="text-sm text-gray-400 mb-6 italic">Enter ID below to view or wait for latest</p>
+
+        <div class="grid grid-cols-2 gap-3 mb-6">
+            <button onclick="castVote(true)" class="vote-box py-4 text-xl font-bold">YES <span id="resA" class="block text-[10px] text-gray-500">0%</span></button>
+            <button onclick="castVote(false)" class="vote-box py-4 text-xl font-bold">NO <span id="resB" class="block text-[10px] text-gray-500">0%</span></button>
         </div>
-
-        <div class="card">
-            <h3>DAO Governance</h3>
-            <div class="label">Proposal Title:</div>
-            <input type="text" id="propTitle" placeholder="Enter Idea...">
-            <button onclick="handleCreateProposal()" style="background: #007bff; color: white;">Create Proposal</button>
-            <hr>
-            <div class="label">Vote on Proposal ID:</div>
-            <input type="number" id="propId" placeholder="ID Number">
-            <div style="display: flex; gap: 10px;">
-                <button onclick="handleVote(true)">Vote YES</button>
-                <button onclick="handleVote(false)" style="background: #f6465d; color: white;">Vote NO</button>
-            </div>
+        <div class="flex gap-2">
+            <input type="number" id="voterPropId" placeholder="Prop ID" class="action-input flex-1 p-2 rounded-lg text-xs" />
+            <button onclick="loadProposalById()" class="bg-white/10 px-4 rounded-lg text-xs">Load ID</button>
         </div>
     </div>
+  </div>
 
-    <script>
-        // --- 1. CONFIGURATION (Bhai yahan apne addresses dalo) ---
+  <div class="glass neon-border overflow-hidden mb-10 p-5">
+    <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-3">
+        <span class="font-bold text-cyan-400 text-sm"><i class="fa-solid fa-coins mr-2"></i>Unclaimed Rewards</span>
+        <button onclick="claimRewards()" class="bg-cyan-500 text-black text-[10px] font-bold px-3 py-1 rounded-md uppercase">Claim All</button>
+    </div>
+    <div id="multiCoinList" class="space-y-3">
+        <div class="text-xs text-gray-500 italic">No rewards found</div>
+    </div>
+  </div>
+
+  <div class="glass p-6 neon-border mb-8">
+    <div class="flex flex-col sm:flex-row justify-between mb-6">
+      <h2 class="text-lg font-bold text-white">Stake AsiaX</h2>
+      <div class="text-sm text-cyan-300">Wallet: <span id="userBalanceDisplay">0.00</span></div>
+    </div>
+    <div class="relative mb-4">
+      <input type="number" id="stakeAmount" placeholder="Amount to stake" class="action-input w-full p-4 rounded-xl" />
+      <button onclick="setMax()" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-cyan-300">MAX</button>
+    </div>
+    <button id="stakeBtn" onclick="handleStake()" class="connect-btn w-full text-white font-bold py-4 rounded-xl">Stake / Add Coins</button>
+    <div id="stakingStatus" class="status-msg text-center"></div>
+  </div>
+
+  <div class="glass p-6 border border-red-500/30">
+    <div class="text-xs text-center text-gray-400 mb-4 uppercase">Lock Period Remaining</div>
+    <div class="flex justify-between items-center mb-6">
+        <div class="timer-box flex-1 text-center"><div id="days" class="text-xl font-bold">00</div><div class="text-[10px]">Days</div></div>
+        <div class="timer-box flex-1 text-center"><div id="hours" class="text-xl font-bold">00</div><div class="text-[10px]">Hrs</div></div>
+        <div class="timer-box flex-1 text-center"><div id="mins" class="text-xl font-bold">00</div><div class="text-[10px]">Mins</div></div>
+    </div>
+    <button id="withdrawBtn" disabled onclick="handleWithdraw()" class="withdraw-btn w-full text-white font-bold py-4 rounded-xl uppercase">Withdraw Principal</button>
+  </div>
+</div>
+
+<script>
+  // --- CONFIGURATION ---
 
         const TOKEN_ADDR = "0x80675dCe080d52dD842e93bF3bc15E28dACD78CB";
         const STAKING_ADDR = "0x831759FCA93d9bCD7119a997f951Cc62eD2CAa2c";
         const GOV_ADDR = "0xeeA40E06c83649f8B0c10c40391bF38FaD7d805b";
-        // --- 2. ABIs (Remix se copy karke yahan paste karein) ---
-        const TOKEN_ABI = [
-            "function approve(address spender, uint256 amount) public returns (bool)",
-            "function balanceOf(address account) view returns (uint256)"
-        ];
-        const STAKING_ABI = [
-            "function stake(uint256 amount) external",
-            "function withdraw(uint256 amount) external",
-            "function claimRewards() external",
-            "function getStakedAmount(address user) view returns (uint256)"
-        ];
-        const GOV_ABI = [
-            "function createProposal(string title) external",
-            "function castVote(uint256 proposalId, bool support) external"
-        ];
+      
+  // ABIs
+  const STAKING_ABI = [
+    "function totalStaked() view returns (uint256)",
+    "function members(address) view returns (uint256 stakedAmount, uint256 lockTimestamp)",
+    "function LOCK_PERIOD() view returns (uint256)",
+    "function activeRewardTokens(uint256) view returns (address)",
+    "function earned(address, address) view returns (uint256)",
+    "function addCoinsToDAO(uint256)",
+    "function getStakedAmount(address) view returns (uint256)"
+  ];
+  const GOV_ABI = [
+    "function proposalCount() view returns (uint256)",
+    "function proposals(uint256) view returns (address proposer, string title, uint256 endTime, uint256 votesA, uint256 votesB, bool executed)",
+    "function createProposal(string)",
+    "function castVote(uint256, bool)"
+  ];
+  const TOKEN_ABI = [
+    "function balanceOf(address) view returns (uint256)",
+    "function approve(address, uint256) returns (bool)",
+    "function symbol() view returns (string)"
+  ];
 
-        let provider, signer, tokenContract, stakingContract, govContract;
+  let provider, signer, stakingContract, govContract, tokenContract, userAddress;
 
-        // Polygon Special Gas Function (SafePal Error Fix)
-        async function getPolygonGas() {
-            const feeData = await provider.getFeeData();
-            return {
-                maxFeePerGas: feeData.maxFeePerGas.mul(150).div(100), // 1.5x of Base Fee
-                maxPriorityFeePerGas: feeData.maxPriorityFeePerGas.mul(150).div(100) // 1.5x of Priority Fee
-            };
+  // SafePal Polygon Gas Fix
+  async function getGasOptions() {
+    const feeData = await provider.getFeeData();
+    return {
+      maxFeePerGas: (feeData.maxFeePerGas * 150n) / 100n,
+      maxPriorityFeePerGas: (feeData.maxPriorityFeePerGas * 150n) / 100n
+    };
+  }
+
+  async function connectWallet() {
+    if (!window.ethereum) return alert("Install SafePal/Trust Wallet");
+    provider = new ethers.BrowserProvider(window.ethereum);
+    const accounts = await provider.send("eth_requestAccounts", []);
+    userAddress = accounts[0];
+    signer = await provider.getSigner();
+
+    stakingContract = new ethers.Contract(STAKING_ADDR, STAKING_ABI, signer);
+    govContract = new ethers.Contract(GOV_ADDR, GOV_ABI, signer);
+    tokenContract = new ethers.Contract(TOKEN_ADDR, TOKEN_ABI, signer);
+
+    document.getElementById('walletText').innerText = userAddress.slice(0,6)+"..."+userAddress.slice(-4);
+    refreshData();
+    setInterval(refreshData, 20000);
+  }
+
+  async function refreshData() {
+    if (!userAddress) return;
+    try {
+        const total = await stakingContract.totalStaked();
+        const member = await stakingContract.members(userAddress);
+        const balance = await tokenContract.balanceOf(userAddress);
+
+        const stakedEth = parseFloat(ethers.formatEther(member.stakedAmount));
+        const totalEth = parseFloat(ethers.formatEther(total));
+
+        document.getElementById('userStakedDisplay').innerText = stakedEth.toFixed(0);
+        document.getElementById('userBalanceDisplay').innerText = parseFloat(ethers.formatEther(balance)).toFixed(2);
+        document.getElementById('votingPowerDisplay').innerText = totalEth > 0 ? ((stakedEth/totalEth)*100).toFixed(2) + "%" : "0.00%";
+        
+        // Badge Logic
+        if(stakedEth > 10000) document.getElementById('badgeDisplay').innerText = "WHALE 🐳";
+        else if(stakedEth > 1000) document.getElementById('badgeDisplay').innerText = "SHARK 🦈";
+
+        // Timer
+        const lockPeriod = await stakingContract.LOCK_PERIOD();
+        const unlockTime = Number(member.lockTimestamp) + Number(lockPeriod);
+        const now = Math.floor(Date.now()/1000);
+        updateTimer(stakedEth > 0 ? unlockTime - now : 0);
+
+        // Rewards (Manually check first few slots for testing)
+        loadRewards();
+    } catch(e) { console.log(e); }
+  }
+
+  async function handleStake() {
+    try {
+        const val = document.getElementById('stakeAmount').value;
+        const wei = ethers.parseEther(val);
+        const gas = await getGasOptions();
+        
+        document.getElementById('stakingStatus').innerText = "Approving AsiaX...";
+        const tx1 = await tokenContract.approve(STAKING_ADDR, ethers.MaxUint256, gas);
+        await tx1.wait();
+        
+        document.getElementById('stakingStatus').innerText = "Staking into DAO...";
+        const tx2 = await stakingContract.addCoinsToDAO(wei, gas);
+        await tx2.wait();
+        
+        document.getElementById('stakingStatus').innerText = "Success!";
+        refreshData();
+    } catch(e) { alert("Error: " + e.message); }
+  }
+
+  async function loadProposalById() {
+    const id = document.getElementById('voterPropId').value;
+    if(!id) return;
+    try {
+        const p = await govContract.proposals(id);
+        document.getElementById('displayPropTitle').innerText = p.title;
+        document.getElementById('displayPropDesc').innerText = "Proposal ID: " + id;
+        
+        const totalVotes = parseFloat(p.votesA) + parseFloat(p.votesB);
+        if(totalVotes > 0) {
+            document.getElementById('resA').innerText = ((parseFloat(p.votesA)/totalVotes)*100).toFixed(0) + "%";
+            document.getElementById('resB').innerText = ((parseFloat(p.votesB)/totalVotes)*100).toFixed(0) + "%";
         }
+    } catch(e) { alert("Invalid ID"); }
+  }
 
-        // Connect Wallet
-        document.getElementById('connectBtn').onclick = async () => {
-            if (window.ethereum) {
-                try {
-                    provider = new ethers.providers.Web3Provider(window.ethereum);
-                    await provider.send("eth_requestAccounts", []);
-                    signer = provider.getSigner();
-                    const address = await signer.getAddress();
-                    
-                    document.getElementById('status').innerText = "✅ Connected: " + address;
-                    
-                    tokenContract = new ethers.Contract(TOKEN_ADDR, TOKEN_ABI, signer);
-                    stakingContract = new ethers.Contract(STAKING_ADDR, STAKING_ABI, signer);
-                    govContract = new ethers.Contract(GOV_ADDR, GOV_ABI, signer);
-                    
-                    refreshData();
-                } catch (e) { alert("Connection Error: " + e.message); }
-            } else { alert("Please use SafePal/Trust Wallet Browser!"); }
-        };
+  async function handleCreateProposal() {
+    const title = document.getElementById('propTitle').value;
+    try {
+        const gas = await getGasOptions();
+        const tx = await govContract.createProposal(title, gas);
+        await tx.wait();
+        alert("Proposal Created!");
+    } catch(e) { alert(e.message); }
+  }
 
-        async function refreshData() {
-            try {
-                const address = await signer.getAddress();
-                const staked = await stakingContract.getStakedAmount(address);
-                document.getElementById('stakedBalance').innerText = ethers.utils.formatEther(staked);
-            } catch (e) { console.log("Refresh Error:", e); }
-        }
+  async function castVote(support) {
+    const id = document.getElementById('voterPropId').value;
+    try {
+        const gas = await getGasOptions();
+        const tx = await govContract.castVote(id, support, gas);
+        await tx.wait();
+        alert("Voted!");
+        loadProposalById();
+    } catch(e) { alert("Vote Failed"); }
+  }
 
-        async function handleStake() {
-            try {
-                const amount = ethers.utils.parseEther(document.getElementById('stakeAmount').value);
-                const gas = await getPolygonGas();
-                
-                document.getElementById('status').innerText = "1/2: Approving Tokens...";
-                const tx1 = await tokenContract.approve(STAKING_ADDR, amount, gas);
-                await tx1.wait();
-                
-                document.getElementById('status').innerText = "2/2: Staking in Progress...";
-                const tx2 = await stakingContract.stake(amount, gas);
-                await tx2.wait();
-                
-                document.getElementById('status').innerText = "✅ Staked Successfully!";
-                refreshData();
-            } catch (e) { 
-                document.getElementById('status').innerText = "❌ Error Occurred";
-                alert(e.message); 
-            }
-        }
+  function updateTimer(sec) {
+    if(sec <= 0) {
+        document.getElementById('withdrawBtn').disabled = false;
+        document.getElementById('days').innerText = "00";
+        return;
+    }
+    document.getElementById('withdrawBtn').disabled = true;
+    const d = Math.floor(sec/(24*3600));
+    const h = Math.floor((sec%(24*3600))/3600);
+    const m = Math.floor((sec%3600)/60);
+    document.getElementById('days').innerText = d.toString().padStart(2,'0');
+    document.getElementById('hours').innerText = h.toString().padStart(2,'0');
+    document.getElementById('mins').innerText = m.toString().padStart(2,'0');
+  }
 
-        async function handleClaim() {
-            try {
-                const gas = await getPolygonGas();
-                document.getElementById('status').innerText = "Claiming Rewards...";
-                const tx = await stakingContract.claimRewards(gas);
-                await tx.wait();
-                document.getElementById('status').innerText = "✅ Rewards Claimed!";
-            } catch (e) { alert(e.message); }
-        }
-
-        async function handleWithdraw() {
-            try {
-                const amount = ethers.utils.parseEther(document.getElementById('stakeAmount').value);
-                const gas = await getPolygonGas();
-                document.getElementById('status').innerText = "Withdrawing...";
-                const tx = await stakingContract.withdraw(amount, gas);
-                await tx.wait();
-                document.getElementById('status').innerText = "✅ Withdrawn!";
-                refreshData();
-            } catch (e) { alert("Error: " + e.message); }
-        }
-
-        async function handleCreateProposal() {
-            try {
-                const title = document.getElementById('propTitle').value;
-                const gas = await getPolygonGas();
-                document.getElementById('status').innerText = "Creating Proposal...";
-                const tx = await govContract.createProposal(title, gas);
-                await tx.wait();
-                alert("Proposal Created!");
-                document.getElementById('status').innerText = "✅ Proposal Online";
-            } catch (e) { alert(e.message); }
-        }
-
-        async function handleVote(side) {
-            try {
-                const id = document.getElementById('propId').value;
-                const gas = await getPolygonGas();
-                document.getElementById('status').innerText = "Voting...";
-                const tx = await govContract.castVote(id, side, gas);
-                await tx.wait();
-                alert("Voted Successfully!");
-                document.getElementById('status').innerText = "✅ Vote Recorded";
-            } catch (e) { alert(e.message); }
-        }
-    </script>
+  function setMax() {
+    document.getElementById('stakeAmount').value = document.getElementById('userBalanceDisplay').innerText;
+  }
+  
+  // Note: Aapke contract mein activeRewardTokens ek array hai. Loop se fetch karein.
+  async function loadRewards() {
+      // Dummy check for 1st reward token (Modify based on your array)
+      try {
+          const list = document.getElementById('multiCoinList');
+          const tAddr = await stakingContract.activeRewardTokens(0); 
+          const earned = await stakingContract.earned(userAddress, tAddr);
+          const tContract = new ethers.Contract(tAddr, ["function symbol() view returns (string)"], provider);
+          const sym = await tContract.symbol();
+          list.innerHTML = `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl">
+             <span class="text-sm font-bold">${sym}</span>
+             <span class="text-xs text-cyan-400">${parseFloat(ethers.formatEther(earned)).toFixed(4)}</span>
+          </div>`;
+      } catch(e) { }
+  }
+</script>
 </body>
 </html>
