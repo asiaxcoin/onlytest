@@ -18,6 +18,7 @@
         .action-input { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; outline: none; }
         .withdraw-btn { background: linear-gradient(90deg, #ff4b2b, #ff416c); }
         .withdraw-btn:disabled { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="antialiased p-4">
@@ -61,13 +62,13 @@
             <span class="font-bold text-cyan-400 text-xs">My Rewards</span>
             <button onclick="claimAllRewards()" class="bg-cyan-500 text-black text-[9px] font-bold px-3 py-1 rounded">CLAIM ALL</button>
         </div>
-        <div id="multiCoinList" class="space-y-2 text-xs italic text-gray-500">Connect wallet to see rewards</div>
+        <div id="multiCoinList" class="space-y-2 text-xs italic text-gray-500 text-center">Wallet not connected</div>
     </div>
 
     <div class="glass p-5 border border-purple-500/20">
         <div class="flex justify-between mb-4">
             <h2 class="text-md font-bold text-white">Stake AsiaX</h2>
-            <div class="text-[10px] text-cyan-300">Wallet: <span id="userBalance">0.00</span></div>
+            <div class="text-[10px] text-cyan-300">Balance: <span id="userBalance">0.00</span></div>
         </div>
         <div class="relative mb-4">
             <input type="number" id="stakeAmount" placeholder="0.0" class="action-input w-full p-3 rounded-xl text-sm" />
@@ -87,215 +88,170 @@
 </div>
 
 <script>
-    // ================== CONFIG ==================
+    // --- CONFIG (POLYGON MAINNET) ---
     const STAKING_ADDR = "0x23E12941383c7de11D8ab066Ba96897535DD3e48";
     const GOV_ADDR = "0x074fF1363A23EE4142963bD34e4f88F7552C2ea1";
     const TOKEN_ADDR = "0x80675dCe080d52dD842e93bF3bc15E28dACD78CB";
+    const CHAIN_ID = "0x89"; // Polygon 137
 
-    const STAKING_ABI = [
-        "function totalStaked() view returns (uint256)",
-        "function members(address) view returns (uint256 stakedAmount, uint256 lockTimestamp)",
-        "function LOCK_PERIOD() view returns (uint256)",
-        "function getActiveRewardTokens() view returns (address[])",
-        "function earned(address, address) view returns (uint256)",
-        "function addCoinsToDAO(uint256)",
-        "function claimAllRewards()",
-        "function withdrawPrincipal()"
-    ];
-    const GOV_ABI = [
-        "function proposalCount() view returns (uint256)",
-        "function proposals(uint256) view returns (address, string, uint256, uint256, uint256, bool)",
-        "function castVote(uint256, bool)"
-    ];
-    const TOKEN_ABI = [
-        "function balanceOf(address) view returns (uint256)",
-        "function approve(address, uint256) returns (bool)",
-        "function allowance(address, address) view returns (uint256)",
-        "function symbol() view returns (string)"
-    ];
+    const ABIs = {
+        staking: ["function totalStaked() view returns (uint256)", "function members(address) view returns (uint256 stakedAmount, uint256 lockTimestamp)", "function LOCK_PERIOD() view returns (uint256)", "function getActiveRewardTokens() view returns (address[])", "function earned(address, address) view returns (uint256)", "function addCoinsToDAO(uint256)", "function claimAllRewards()", "function withdrawPrincipal()"],
+        gov: ["function proposalCount() view returns (uint256)", "function proposals(uint256) view returns (address, string, uint256, uint256, uint256, bool)", "function castVote(uint256, bool)"],
+        token: ["function balanceOf(address) view returns (uint256)", "function approve(address, uint256) returns (bool)", "function allowance(address, address) view returns (uint256)", "function symbol() view returns (string)"]
+    };
 
-    let provider, signer, stakingContract, govContract, tokenContract, userAddress;
+    let provider, signer, userAddress, contracts = {};
 
-    // Mobile-friendly provider check
-    async function connectWallet() {
+    async function checkAndSwitchNetwork(eth) {
         try {
-            if (typeof window.ethereum === 'undefined') {
-                return alert("Wallet not detected. Please use SafePal/TrustWallet browser.");
+            await eth.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: CHAIN_ID }] });
+        } catch (err) {
+            if (err.code === 4902) {
+                await eth.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [{
+                        chainId: CHAIN_ID,
+                        chainName: 'Polygon Mainnet',
+                        nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
+                        rpcUrls: ['https://polygon-rpc.com'],
+                        blockExplorerUrls: ['https://polygonscan.com']
+                    }]
+                });
             }
+        }
+    }
 
-            // Mobile compatibility: Re-init provider each time
-            provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+    async function connectWallet() {
+        const btn = document.getElementById('connectBtn');
+        try {
+            if (!window.ethereum) return alert("Open this in SafePal or Bitget Wallet Browser");
             
-            // SafePal/MetaMask account request
+            btn.disabled = true;
+            document.getElementById('walletText').innerText = "Connecting...";
+
+            await checkAndSwitchNetwork(window.ethereum);
+            
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
             userAddress = accounts[0];
+            
+            provider = new ethers.providers.Web3Provider(window.ethereum, "any");
             signer = provider.getSigner();
 
-            // Init Contracts
-            stakingContract = new ethers.Contract(STAKING_ADDR, STAKING_ABI, signer);
-            govContract = new ethers.Contract(GOV_ADDR, GOV_ABI, signer);
-            tokenContract = new ethers.Contract(TOKEN_ADDR, TOKEN_ABI, signer);
+            contracts.staking = new ethers.Contract(STAKING_ADDR, ABIs.staking, signer);
+            contracts.gov = new ethers.Contract(GOV_ADDR, ABIs.gov, signer);
+            contracts.token = new ethers.Contract(TOKEN_ADDR, ABIs.token, signer);
 
             document.getElementById('walletText').innerText = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
             
-            // Initial Data load
             refreshData();
             
-            // Setup listeners for account change
-            window.ethereum.on('accountsChanged', (accs) => {
-                if(accs.length > 0) location.reload();
-            });
+            // Listeners for mobile wallets
+            window.ethereum.on('accountsChanged', () => location.reload());
+            window.ethereum.on('chainChanged', () => location.reload());
 
         } catch (e) {
             console.error(e);
-            alert("Connection Failed: " + (e.message || "Unknown error"));
+            alert("Connection Failed. Please try again.");
+            document.getElementById('walletText').innerText = "Connect Wallet";
+            btn.disabled = false;
         }
     }
 
     async function refreshData() {
-        if (!userAddress || !stakingContract) return;
+        if (!userAddress) return;
         try {
-            const [total, member, balance, lockPeriod] = await Promise.all([
-                stakingContract.totalStaked(),
-                stakingContract.members(userAddress),
-                tokenContract.balanceOf(userAddress),
-                stakingContract.LOCK_PERIOD()
+            const [total, member, balance, lockTime] = await Promise.all([
+                contracts.staking.totalStaked(),
+                contracts.staking.members(userAddress),
+                contracts.token.balanceOf(userAddress),
+                contracts.staking.LOCK_PERIOD()
             ]);
 
-            const stakedEth = parseFloat(ethers.utils.formatEther(member.stakedAmount));
-            const totalEth = parseFloat(ethers.utils.formatEther(total));
-            const balEth = parseFloat(ethers.utils.formatEther(balance));
+            const staked = ethers.utils.formatEther(member.stakedAmount);
+            const totalS = ethers.utils.formatEther(total);
+            
+            document.getElementById('userStakedDisplay').innerText = parseFloat(staked).toFixed(0);
+            document.getElementById('userBalance').innerText = parseFloat(ethers.utils.formatEther(balance)).toFixed(2);
+            document.getElementById('votingPowerDisplay').innerText = totalS > 0 ? ((staked/totalS)*100).toFixed(2) + "%" : "0%";
 
-            document.getElementById('userStakedDisplay').innerText = stakedEth.toLocaleString(undefined, {maximumFractionDigits: 2});
-            document.getElementById('userBalance').innerText = balEth.toFixed(2);
-            document.getElementById('votingPowerDisplay').innerText = totalEth > 0 ? ((stakedEth/totalEth)*100).toFixed(2) + "%" : "0%";
+            const unlockAt = Number(member.lockTimestamp) + Number(lockTime);
+            const diff = unlockAt - Math.floor(Date.now()/1000);
+            updateTimer(diff > 0 && staked > 0 ? diff : 0);
 
-            // Timer Logic
-            const unlockTime = Number(member.lockTimestamp) + Number(lockPeriod);
-            const now = Math.floor(Date.now()/1000);
-            const remaining = unlockTime - now;
-            updateTimer(remaining > 0 && stakedEth > 0 ? remaining : 0);
-
-            loadActiveProposal();
+            loadGov();
             loadRewards();
-        } catch(e) { console.error("Refresh Error:", e); }
+        } catch(e) { console.log("Data error"); }
     }
 
     async function handleStake() {
         const amt = document.getElementById('stakeAmount').value;
-        if(!amt || parseFloat(amt) <= 0) return alert("Enter valid amount");
-        
+        if(!amt || amt <= 0) return alert("Enter Amount");
+        const btn = document.getElementById('stakeBtn');
         try {
+            btn.disabled = true; btn.innerText = "Processing...";
             const wei = ethers.utils.parseEther(amt.toString());
             
-            // Button loading state
-            const btn = document.getElementById('stakeBtn');
-            const originalText = btn.innerText;
-            btn.innerText = "WAITING...";
-            btn.disabled = true;
-
-            const allowance = await tokenContract.allowance(userAddress, STAKING_ADDR);
-            
+            const allowance = await contracts.token.allowance(userAddress, STAKING_ADDR);
             if(allowance.lt(wei)) {
-                const txApp = await tokenContract.approve(STAKING_ADDR, ethers.constants.MaxUint256);
-                await txApp.wait();
+                const tx1 = await contracts.token.approve(STAKING_ADDR, ethers.constants.MaxUint256);
+                await tx1.wait();
             }
             
-            const txStake = await stakingContract.addCoinsToDAO(wei);
-            await txStake.wait();
-            
-            alert("Staking Successful!");
+            const tx2 = await contracts.staking.addCoinsToDAO(wei);
+            await tx2.wait();
+            alert("Success!");
             refreshData();
-        } catch(e) { 
-            alert("Error: " + (e.data?.message || e.message || "Transaction Failed")); 
-        } finally {
-            document.getElementById('stakeBtn').innerText = "STAKE NOW";
-            document.getElementById('stakeBtn').disabled = false;
-        }
+        } catch(e) { alert("Tx Failed: " + (e.data?.message || e.message)); }
+        finally { btn.disabled = false; btn.innerText = "STAKE NOW"; }
     }
 
-    async function loadActiveProposal() {
+    async function loadGov() {
         try {
-            const count = await govContract.proposalCount();
-            if(count.eq(0)) return;
-            const p = await govContract.proposals(count.sub(1));
-            document.getElementById('displayPropTitle').innerText = p[1];
-        } catch(e) { console.log("Proposal Load Error"); }
+            const count = await contracts.gov.proposalCount();
+            if(count.gt(0)) {
+                const p = await contracts.gov.proposals(count.sub(1));
+                document.getElementById('displayPropTitle').innerText = p[1];
+            }
+        } catch(e) {}
     }
 
     async function loadRewards() {
         try {
-            const tokens = await stakingContract.getActiveRewardTokens();
+            const tokens = await contracts.staking.getActiveRewardTokens();
             const list = document.getElementById('multiCoinList');
-            if(tokens.length === 0) {
-                list.innerText = "No active rewards";
-                return;
-            }
-            list.innerHTML = "";
+            if(tokens.length > 0) list.innerHTML = "";
             for(let t of tokens) {
-                const earn = await stakingContract.earned(userAddress, t);
+                const earn = await contracts.staking.earned(userAddress, t);
                 const tC = new ethers.Contract(t, ["function symbol() view returns (string)"], provider);
                 const sym = await tC.symbol();
-                if(parseFloat(ethers.utils.formatEther(earn)) > 0) {
-                    list.innerHTML += `<div class="flex justify-between p-2 bg-white/5 rounded-lg border border-white/5">
-                        <span>${sym}</span><span class="text-cyan-400">${parseFloat(ethers.utils.formatEther(earn)).toFixed(6)}</span>
-                    </div>`;
-                }
+                list.innerHTML += `<div class="flex justify-between p-3 bg-white/5 rounded-xl border border-white/10 mb-2">
+                    <span class="font-bold">${sym}</span><span class="text-cyan-400 font-mono">${parseFloat(ethers.utils.formatEther(earn)).toFixed(6)}</span>
+                </div>`;
             }
-            if(list.innerHTML === "") list.innerText = "0.00 Rewards";
-        } catch(e) { console.error("Rewards Error"); }
+        } catch(e) {}
     }
 
     function updateTimer(sec) {
         const btn = document.getElementById('withdrawBtn');
-        if(sec <= 0) { 
-            btn.disabled = false; 
-            document.getElementById('days').innerText = "00";
-            document.getElementById('hours').innerText = "00";
-            document.getElementById('mins').innerText = "00";
-            return; 
-        }
+        if(sec <= 0) { btn.disabled = false; return; }
         btn.disabled = true;
-        document.getElementById('days').innerText = Math.floor(sec/86400).toString().padStart(2,'0');
-        document.getElementById('hours').innerText = Math.floor((sec%86400)/3600).toString().padStart(2,'0');
-        document.getElementById('mins').innerText = Math.floor((sec%3600)/60).toString().padStart(2,'0');
+        const d = Math.floor(sec/86400);
+        const h = Math.floor((sec%86400)/3600);
+        const m = Math.floor((sec%3600)/60);
+        document.getElementById('days').innerText = d.toString().padStart(2,'0');
+        document.getElementById('hours').innerText = h.toString().padStart(2,'0');
+        document.getElementById('mins').innerText = m.toString().padStart(2,'0');
     }
 
-    async function castVote(support) {
-        try {
-            const count = await govContract.proposalCount();
-            const tx = await govContract.castVote(count.sub(1), support);
-            await tx.wait();
-            alert("Vote Casted!");
-            refreshData();
-        } catch(e) { alert("Voting Error: Check if you have staked tokens."); }
-    }
+    async function claimAllRewards() { try { await (await contracts.staking.claimAllRewards()).wait(); refreshData(); } catch(e){} }
+    async function withdrawPrincipal() { try { await (await contracts.staking.withdrawPrincipal()).wait(); refreshData(); } catch(e){} }
+    function setMax() { document.getElementById('stakeAmount').value = document.getElementById('userBalance').innerText; }
+    async function castVote(s) { try { const c = await contracts.gov.proposalCount(); await (await contracts.gov.castVote(c.sub(1), s)).wait(); alert("Voted!"); refreshData(); } catch(e){ alert("Error"); } }
 
-    async function claimAllRewards() { 
-        try {
-            const tx = await stakingContract.claimAllRewards();
-            await tx.wait();
-            refreshData();
-        } catch(e) { alert("Claim Failed"); }
-    }
-
-    async function withdrawPrincipal() { 
-        try {
-            const tx = await stakingContract.withdrawPrincipal();
-            await tx.wait();
-            refreshData();
-        } catch(e) { alert("Withdraw Failed: Check lock period."); }
-    }
-
-    function setMax() { 
-        const bal = document.getElementById('userBalance').innerText;
-        document.getElementById('stakeAmount').value = bal; 
-    }
-
-    // Auto-connect if already authorized
+    // Auto-connect check
     window.addEventListener('load', () => {
-        if (window.ethereum && window.ethereum.selectedAddress) {
-            connectWallet();
+        if(window.ethereum && (window.ethereum.isSafePal || window.ethereum.isBitKeep)) {
+            setTimeout(connectWallet, 1000); 
         }
     });
 </script>
