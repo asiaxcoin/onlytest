@@ -25,7 +25,7 @@
 
 <div class="max-w-xl mx-auto space-y-6">
     <div class="flex justify-between items-center px-1 pt-4">
-        <div class="text-xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">ASIAX 1DAO</div>
+        <div class="text-xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">ASIAX DAO</div>
         <button id="connectBtn" class="connect-btn text-white text-xs font-bold px-5 py-2.5 rounded-full flex items-center gap-2" onclick="connectWallet()">
             <i class="fa-solid fa-wallet"></i> <span id="walletText">Connect Wallet</span>
         </button>
@@ -102,12 +102,18 @@
 
     let provider, signer, userAddress, contracts = {};
 
-    async function checkAndSwitchNetwork(eth) {
+    function getWalletProvider() {
+        if (window.safepalProvider) return window.safepalProvider;
+        if (window.ethereum) return window.ethereum;
+        return null;
+    }
+
+    async function checkAndSwitchNetwork(walletProvider) {
         try {
-            await eth.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: CHAIN_ID }] });
+            await walletProvider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: CHAIN_ID }] });
         } catch (err) {
             if (err.code === 4902) {
-                await eth.request({
+                await walletProvider.request({
                     method: 'wallet_addEthereumChain',
                     params: [{
                         chainId: CHAIN_ID,
@@ -117,6 +123,8 @@
                         blockExplorerUrls: ['https://polygonscan.com']
                     }]
                 });
+            } else {
+                throw err;
             }
         }
     }
@@ -124,17 +132,20 @@
     async function connectWallet() {
         const btn = document.getElementById('connectBtn');
         try {
-            if (!window.ethereum) return alert("Open this in SafePal or Bitget Wallet Browser");
-            
+            const walletProvider = getWalletProvider();
+            if (!walletProvider) {
+                return alert("Open this in Trust Wallet, SafePal Wallet, or any Web3 browser!");
+            }
+
             btn.disabled = true;
             document.getElementById('walletText').innerText = "Connecting...";
 
-            await checkAndSwitchNetwork(window.ethereum);
-            
-            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            await checkAndSwitchNetwork(walletProvider);
+
+            const accounts = await walletProvider.request({ method: 'eth_requestAccounts' });
             userAddress = accounts[0];
-            
-            provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+
+            provider = new ethers.providers.Web3Provider(walletProvider, "any");
             signer = provider.getSigner();
 
             contracts.staking = new ethers.Contract(STAKING_ADDR, ABIs.staking, signer);
@@ -142,16 +153,16 @@
             contracts.token = new ethers.Contract(TOKEN_ADDR, ABIs.token, signer);
 
             document.getElementById('walletText').innerText = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
-            
+
             refreshData();
-            
-            // Listeners for mobile wallets
-            window.ethereum.on('accountsChanged', () => location.reload());
-            window.ethereum.on('chainChanged', () => location.reload());
+
+            // Listeners
+            walletProvider.on('accountsChanged', () => location.reload());
+            walletProvider.on('chainChanged', () => location.reload());
 
         } catch (e) {
             console.error(e);
-            alert("Connection Failed. Please try again.");
+            alert("Connection Failed: " + (e.message || "Unknown error"));
             document.getElementById('walletText').innerText = "Connect Wallet";
             btn.disabled = false;
         }
@@ -169,7 +180,7 @@
 
             const staked = ethers.utils.formatEther(member.stakedAmount);
             const totalS = ethers.utils.formatEther(total);
-            
+
             document.getElementById('userStakedDisplay').innerText = parseFloat(staked).toFixed(0);
             document.getElementById('userBalance').innerText = parseFloat(ethers.utils.formatEther(balance)).toFixed(2);
             document.getElementById('votingPowerDisplay').innerText = totalS > 0 ? ((staked/totalS)*100).toFixed(2) + "%" : "0%";
@@ -180,7 +191,7 @@
 
             loadGov();
             loadRewards();
-        } catch(e) { console.log("Data error"); }
+        } catch(e) { console.log("Data error:", e); }
     }
 
     async function handleStake() {
@@ -190,19 +201,24 @@
         try {
             btn.disabled = true; btn.innerText = "Processing...";
             const wei = ethers.utils.parseEther(amt.toString());
-            
+
             const allowance = await contracts.token.allowance(userAddress, STAKING_ADDR);
             if(allowance.lt(wei)) {
                 const tx1 = await contracts.token.approve(STAKING_ADDR, ethers.constants.MaxUint256);
                 await tx1.wait();
             }
-            
+
             const tx2 = await contracts.staking.addCoinsToDAO(wei);
             await tx2.wait();
             alert("Success!");
             refreshData();
-        } catch(e) { alert("Tx Failed: " + (e.data?.message || e.message)); }
-        finally { btn.disabled = false; btn.innerText = "STAKE NOW"; }
+        } catch(e) { 
+            alert("Tx Failed: " + (e.data?.message || e.message || "Unknown")); 
+        }
+        finally { 
+            btn.disabled = false; 
+            btn.innerText = "STAKE NOW"; 
+        }
     }
 
     async function loadGov() {
@@ -225,7 +241,7 @@
                 const tC = new ethers.Contract(t, ["function symbol() view returns (string)"], provider);
                 const sym = await tC.symbol();
                 list.innerHTML += `<div class="flex justify-between p-3 bg-white/5 rounded-xl border border-white/10 mb-2">
-                    <span class="font-bold">${sym}</span><span class="text-cyan-400 font-mono">${parseFloat(ethers.utils.formatEther(earn)).toFixed(6)}</span>
+                    <span class="font-bold">\( {sym}</span><span class="text-cyan-400 font-mono"> \){parseFloat(ethers.utils.formatEther(earn)).toFixed(6)}</span>
                 </div>`;
             }
         } catch(e) {}
@@ -243,15 +259,27 @@
         document.getElementById('mins').innerText = m.toString().padStart(2,'0');
     }
 
-    async function claimAllRewards() { try { await (await contracts.staking.claimAllRewards()).wait(); refreshData(); } catch(e){} }
-    async function withdrawPrincipal() { try { await (await contracts.staking.withdrawPrincipal()).wait(); refreshData(); } catch(e){} }
+    async function claimAllRewards() { 
+        try { await (await contracts.staking.claimAllRewards()).wait(); refreshData(); } catch(e){ alert("Claim failed: " + e.message); }
+    }
+    async function withdrawPrincipal() { 
+        try { await (await contracts.staking.withdrawPrincipal()).wait(); refreshData(); } catch(e){ alert("Withdraw failed: " + e.message); }
+    }
     function setMax() { document.getElementById('stakeAmount').value = document.getElementById('userBalance').innerText; }
-    async function castVote(s) { try { const c = await contracts.gov.proposalCount(); await (await contracts.gov.castVote(c.sub(1), s)).wait(); alert("Voted!"); refreshData(); } catch(e){ alert("Error"); } }
+    async function castVote(s) { 
+        try { 
+            const c = await contracts.gov.proposalCount(); 
+            await (await contracts.gov.castVote(c.sub(1), s)).wait(); 
+            alert("Voted!"); 
+            refreshData(); 
+        } catch(e){ alert("Vote Error: " + e.message); } 
+    }
 
-    // Auto-connect check
+    // Auto-connect if in wallet browser
     window.addEventListener('load', () => {
-        if(window.ethereum && (window.ethereum.isSafePal || window.ethereum.isBitKeep)) {
-            setTimeout(connectWallet, 1000); 
+        const walletProvider = getWalletProvider();
+        if (walletProvider) {
+            setTimeout(connectWallet, 1200); // thoda delay SafePal ke liye safe hai
         }
     });
 </script>
