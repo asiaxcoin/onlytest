@@ -1,149 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>AsiaX Pro • Master DAO</title>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AsiaX DAO Portal</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/4.1.1/web3.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-        body { background: linear-gradient(135deg, #0f001a 0%, #05000f 100%); color: #e0e0ff; font-family: 'Inter', sans-serif; min-height: 100vh; margin: 0; }
-        .glass { background: rgba(30, 20, 60, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(100, 100, 255, 0.15); border-radius: 1.25rem; }
-        .connect-btn { background: linear-gradient(90deg, #00d4ff, #7b00ff); box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3); transition: all 0.3s ease; }
-        .vote-box { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1rem; color: white; cursor: pointer; }
-        .action-input { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; outline: none; }
-        .withdraw-btn { background: linear-gradient(90deg, #ff4b2b, #ff416c); }
-        .withdraw-btn:disabled { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        body { font-family: sans-serif; background: #121212; color: white; padding: 20px; text-align: center; }
+        .card { background: #1e1e1e; padding: 20px; border-radius: 15px; margin: 10px auto; max-width: 400px; border: 1px solid #333; }
+        button { background: #f3ba2f; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+        input { width: 90%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #444; background: #000; color: white; }
+        .status { color: #00ff00; font-size: 0.8rem; }
     </style>
 </head>
-<body class="antialiased p-4">
+<body>
 
-<div class="max-w-xl mx-auto space-y-6">
-    <!-- same HTML as before (header, grids, sections) -->
-    <div class="flex justify-between items-center px-1 pt-4">
-        <div class="text-xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">ASIAX2 DAO</div>
-        <button id="connectBtn" class="connect-btn text-white text-xs font-bold px-5 py-2.5 rounded-full flex items-center gap-2" onclick="connectWallet()">
-            <i class="fa-solid fa-wallet"></i> <span id="walletText">Connect Wallet</span>
-        </button>
+    <h1>AsiaX DAO</h1>
+    <div id="walletAddress" class="status">Wallet Not Connected</div>
+    <button onclick="connectWallet()">Connect SafePal / Trust / MetaMask</button>
+
+    <div class="card">
+        <h3>Staking (Contract 1)</h3>
+        <p>Your Stake: <span id="userStake">0</span> AsiaX</p>
+        <input type="number" id="stakeAmount" placeholder="Amount to Stake">
+        <button onclick="stakeTokens()">Stake Tokens</button>
+        <button onclick="claimRewards()" style="background: #28a745;">Claim Rewards</button>
+        <button onclick="withdrawTokens()" style="background: #dc3545;">Withdraw (After Lock)</button>
     </div>
 
-    <!-- baaki pura HTML same rakha hai (voting, rewards, stake, withdraw) -->
-    <!-- copy kar lena previous code se yahan tak -->
-
-    <div class="glass p-5">
-        <div class="flex justify-between items-center mb-4">
-            <span class="font-bold text-cyan-400 text-xs">My Rewards</span>
-            <button onclick="claimAllRewards()" class="bg-cyan-500 text-black text-[9px] font-bold px-3 py-1 rounded">CLAIM ALL</button>
+    <div class="card">
+        <h3>Governance (Contract 2)</h3>
+        <input type="text" id="propTitle" placeholder="Proposal Title">
+        <button onclick="createProposal()">Create Proposal</button>
+        <hr>
+        <input type="number" id="propId" placeholder="Proposal ID">
+        <div style="display: flex; gap: 10px;">
+            <button onclick="vote(true)">Vote YES</button>
+            <button onclick="vote(false)" style="background: #dc3545;">Vote NO</button>
         </div>
-        <div id="multiCoinList" class="space-y-2 text-xs italic text-gray-500 text-center">Wallet not connected</div>
     </div>
 
-    <!-- stake aur withdraw section same -->
+    <script>
+        let web3;
+        let account;
+        const stakingAddr = "0x831759FCA93d9bCD7119a997f951Cc62eD2CAa2c";
+        const govAddr = "0xeeA40E06c83649f8B0c10c40391bF38FaD7d805b";
+        const tokenAddr = "0x80675dCe080d52dD842e93bF3bc15E28dACD78CB";
 
-</div>
+        // Minimal ABIs (Aapko poore ABI yahan dalne honge)
+        const stakingABI = [[{"inputs":[{"internalType":"address","name":"_asiaxToken","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[],"name":"LOCK_PERIOD","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"activeRewardTokens","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"asiaxToken","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"claimRewards","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"account","type":"address"},{"internalType":"address","name":"rewardToken","type":"address"}],"name":"earned","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_user","type":"address"}],"name":"getStakedAmount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"members","outputs":[{"internalType":"uint256","name":"stakedAmount","type":"uint256"},{"internalType":"uint256","name":"lockTimestamp","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_token","type":"address"},{"internalType":"uint256","name":"_amount","type":"uint256"}],"name":"notifyRewardAmount","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"rewardTokenInfo","outputs":[{"internalType":"uint256","name":"rewardRate","type":"uint256"},{"internalType":"uint256","name":"rewardPerTokenStored","type":"uint256"},{"internalType":"uint256","name":"lastUpdateTime","type":"uint256"},{"internalType":"uint256","name":"periodFinish","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"},{"internalType":"address","name":"","type":"address"}],"name":"rewards","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"}],"name":"stake","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"totalStaked","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"},{"internalType":"address","name":"","type":"address"}],"name":"userRewardPerTokenPaid","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"}],"name":"withdraw","outputs":[],"stateMutability":"nonpayable","type":"function"}]]; 
+        const govABI = [[{"inputs":[{"internalType":"address","name":"_stakingAddress","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"id","type":"uint256"},{"indexed":false,"internalType":"string","name":"title","type":"string"},{"indexed":false,"internalType":"address","name":"proposer","type":"address"}],"name":"ProposalCreated","type":"event"},{"inputs":[],"name":"VOTING_PERIOD","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"_proposalId","type":"uint256"},{"internalType":"bool","name":"_support","type":"bool"}],"name":"castVote","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"string","name":"_title","type":"string"}],"name":"createProposal","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"},{"internalType":"address","name":"","type":"address"}],"name":"hasVoted","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"proposalCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"proposals","outputs":[{"internalType":"address","name":"proposer","type":"address"},{"internalType":"string","name":"title","type":"string"},{"internalType":"uint256","name":"endTime","type":"uint256"},{"internalType":"uint256","name":"votesFor","type":"uint256"},{"internalType":"uint256","name":"votesAgainst","type":"uint256"},{"internalType":"bool","name":"executed","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"stakingContract","outputs":[{"internalType":"contract IStaking","name":"","type":"address"}],"stateMutability":"view","type":"function"}]];
+        const tokenABI = [[{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"inputs":[{"internalType":"address","name":"","type":"address"},{"internalType":"address","name":"","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_spender","type":"address"},{"internalType":"uint256","name":"_value","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_spender","type":"address"},{"internalType":"uint256","name":"_subtractedValue","type":"uint256"}],"name":"decreaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_spender","type":"address"},{"internalType":"uint256","name":"_addedValue","type":"uint256"}],"name":"increaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_to","type":"address"},{"internalType":"uint256","name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_from","type":"address"},{"internalType":"address","name":"_to","type":"address"},{"internalType":"uint256","name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}]];
 
-<script>
-    // --- CONFIG ---
-    const STAKING_ADDR = "0x23E12941383c7de11D8ab066Ba96897535DD3e48";
-    const GOV_ADDR = "0x074fF1363A23EE4142963bD34e4f88F7552C2ea1";
-    const TOKEN_ADDR = "0x80675dCe080d52dD842e93bF3bc15E28dACD78CB";
-    const CHAIN_ID = "0x89";
-
-    const ABIs = { /* same as before */ };
-
-    let provider, signer, userAddress, contracts = {};
-
-    function getWalletProvider() {
-        if (window.safepalProvider) {
-            console.log("✅ SafePal Official Provider Detected");
-            return window.safepalProvider;
-        }
-        if (window.ethereum && window.ethereum.isSafePal) {
-            console.log("✅ SafePal via ethereum.isSafePal");
-            return window.ethereum;
-        }
-        if (window.ethereum) {
-            console.log("✅ Other wallet (Trust/MetaMask)");
-            return window.ethereum;
-        }
-        return null;
-    }
-
-    async function checkAndSwitchNetwork(walletProvider) {
-        try {
-            await walletProvider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: CHAIN_ID }] });
-        } catch (err) {
-            if (err.code === 4902) {
-                await walletProvider.request({
-                    method: 'wallet_addEthereumChain',
-                    params: [{
-                        chainId: CHAIN_ID,
-                        chainName: 'Polygon Mainnet',
-                        nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
-                        rpcUrls: ['https://polygon-rpc.com'],
-                        blockExplorerUrls: ['https://polygonscan.com']
-                    }]
-                });
+        async function connectWallet() {
+            if (window.ethereum) {
+                // SafePal aur MetaMask dono window.ethereum use karte hain
+                web3 = new Web3(window.ethereum);
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    account = accounts[0];
+                    document.getElementById('walletAddress').innerText = "Connected: " + account;
+                    updateUI();
+                } catch (err) {
+                    alert("User denied connection");
+                }
             } else {
-                throw err;
+                alert("Please open this in SafePal DApp Browser");
             }
         }
-    }
 
-    async function connectWallet() {
-        const btn = document.getElementById('connectBtn');
-        try {
-            const walletProvider = getWalletProvider();
-            if (!walletProvider) {
-                return alert("❌ SafePal Provider nahi mila!\n\nSafePal App ke andar 'Discover' section se dApp kholo.\nYa phir https://www.safepal.com/download se latest SafePal download karo.");
-            }
+        async function stakeTokens() {
+            const amount = web3.utils.toWei(document.getElementById('stakeAmount').value, 'ether');
+            const tokenContract = new web3.eth.Contract(tokenABI, tokenAddr);
+            const stakingContract = new web3.eth.Contract(stakingABI, stakingAddr);
 
-            btn.disabled = true;
-            document.getElementById('walletText').innerText = "Connecting...";
-
-            await checkAndSwitchNetwork(walletProvider);
-
-            const accounts = await walletProvider.request({ method: 'eth_requestAccounts' });
-            userAddress = accounts[0];
-
-            provider = new ethers.providers.Web3Provider(walletProvider, "any");
-            signer = provider.getSigner();
-
-            contracts.staking = new ethers.Contract(STAKING_ADDR, ABIs.staking, signer);
-            contracts.gov = new ethers.Contract(GOV_ADDR, ABIs.gov, signer);
-            contracts.token = new ethers.Contract(TOKEN_ADDR, ABIs.token, signer);
-
-            document.getElementById('walletText').innerText = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
-
-            refreshData();
-
-            // listeners
-            walletProvider.on('accountsChanged', () => location.reload());
-            walletProvider.on('chainChanged', () => location.reload());
-
-            console.log("✅ Connected successfully with SafePal!");
-
-        } catch (e) {
-            console.error(e);
-            let msg = e.message || "Unknown";
-            if (e.code === 4001) msg = "User rejected connection";
-            if (e.code === 4902) msg = "Chain add failed";
-            alert("Connection Failed: " + msg);
-            document.getElementById('walletText').innerText = "Connect Wallet";
-            btn.disabled = false;
+            // 1. Approve (Zaroori Step)
+            await tokenContract.methods.approve(stakingAddr, amount).send({ from: account });
+            // 2. Stake
+            await stakingContract.methods.stake(amount).send({ from: account });
+            updateUI();
         }
-    }
 
-    // baaki functions (refreshData, handleStake, loadGov, loadRewards, updateTimer, claim, withdraw, setMax, castVote) **exactly same** rakho jaise previous code mein the
+        async function updateUI() {
+            const stakingContract = new web3.eth.Contract(stakingABI, stakingAddr);
+            const staked = await stakingContract.methods.getStakedAmount(account).call();
+            document.getElementById('userStake').innerText = web3.utils.fromWei(staked, 'ether');
+        }
 
-    // Auto-connect hata diya (user gesture ke liye)
-    // window.addEventListener('load', ...) → comment out ya delete kar do
-
-</script>
+        // Baki functions (withdraw, claim, vote) bhi isi tarah add honge...
+    </script>
 </body>
 </html>
